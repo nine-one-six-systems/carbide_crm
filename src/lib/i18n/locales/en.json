@@ -1,0 +1,43 @@
+{
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "search": "Search",
+    "loading": "Loading...",
+    "noResults": "No results found",
+    "error": "An error occurred",
+    "success": "Success",
+    "confirm": "Confirm",
+    "close": "Close"
+  },
+  "contacts": {
+    "title": "Contacts",
+    "addNew": "Add Contact",
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "email": "Email",
+    "phone": "Phone",
+    "jobTitle": "Job Title",
+    "organization": "Organization",
+    "deleteConfirm": "Are you sure you want to delete {{name}}?",
+    "count": "{{count}} contact",
+    "count_plural": "{{count}} contacts"
+  },
+  "tasks": {
+    "title": "Tasks",
+    "dueToday": "Due Today",
+    "overdue": "Overdue",
+    "upcoming": "Upcoming",
+    "completed": "Completed",
+    "triaged": "Triaged",
+    "dismissed": "Dismissed"
+  },
+  "errors": {
+    "required": "This field is required",
+    "invalidEmail": "Please enter a valid email address",
+    "networkError": "Unable to connect. Please check your internet connection."
+  }
+}
+
