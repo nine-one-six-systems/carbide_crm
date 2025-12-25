@@ -19,6 +19,54 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+/**
+ * Get the full stored session data from localStorage.
+ * Supabase stores sessions with keys like 'sb-<project-ref>-auth-token'
+ */
+function getStoredSessionData(): Record<string, unknown> | null {
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith('sb-') && key.includes('-auth-token')) {
+        const value = localStorage.getItem(key);
+        if (value) {
+          return JSON.parse(value);
+        }
+      }
+    }
+  } catch (e) {
+    console.error('Error reading stored session:', e);
+  }
+  return null;
+}
+
+/**
+ * Decode JWT to get payload without network calls
+ */
+function decodeJwt(token: string): Record<string, unknown> | null {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+    return JSON.parse(atob(parts[1]));
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Create a minimal Session object from stored data
+ */
+function createSessionFromStored(storedData: Record<string, unknown>): Session {
+  return {
+    access_token: storedData.access_token,
+    refresh_token: storedData.refresh_token,
+    expires_in: storedData.expires_in || 3600,
+    expires_at: storedData.expires_at,
+    token_type: 'bearer',
+    user: storedData.user,
+  } as Session;
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -26,17 +74,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [initialized, setInitialized] = useState(false);
   const isSigningInRef = useRef(false);
+  const initializingRef = useRef(false);
 
   const fetchProfile = useCallback(async (userId: string): Promise<Profile | null> => {
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
+      // Use the REST client for profile fetch since SDK queries hang
+      const { restClient } = await import('@/lib/supabase/restClient');
+      const { data, error } = await restClient.querySingle<Profile>('profiles', {
+        filters: [{ column: 'id', operator: 'eq', value: userId }],
+      });
 
       if (error) {
-        // Profile might not exist yet - that's okay for now
         console.warn('Profile fetch error (may not exist):', error.message);
         return null;
       }
@@ -49,86 +97,109 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
+    // Prevent double-initialization in React strict mode
+    if (initializingRef.current) return;
+    initializingRef.current = true;
+    
     let mounted = true;
-    let hasInitialized = false;
 
-    const handleAuthChange = async (session: Session | null) => {
+    // IMMEDIATE session restoration from localStorage - no Supabase calls that might hang
+    const storedData = getStoredSessionData();
+    if (storedData?.access_token) {
+      const jwtPayload = decodeJwt(storedData.access_token as string);
+      if (jwtPayload) {
+        const isExpired = (jwtPayload.exp as number) * 1000 < Date.now();
+        
+        if (!isExpired && storedData.user) {
+          // Restore session immediately from localStorage
+          const restoredUser = storedData.user as User;
+          const restoredSession = createSessionFromStored(storedData);
+          
+          setUser(restoredUser);
+          setSession(restoredSession);
+          setLoading(false);
+          setInitialized(true);
+          
+          // Fetch profile in background
+          if (restoredUser.id) {
+            fetchProfile(restoredUser.id).then(profileData => {
+              if (mounted) setProfile(profileData);
+            });
+          }
+          
+          // Setup listener for future auth changes only
+          const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+            if (!mounted) return;
+            
+            // Skip INITIAL_SESSION since we already handled it
+            if (event === 'INITIAL_SESSION') return;
+            
+            // Handle sign out
+            if (event === 'SIGNED_OUT') {
+              setUser(null);
+              setSession(null);
+              setProfile(null);
+              return;
+            }
+            
+            // Handle token refresh
+            if (event === 'TOKEN_REFRESHED' && session) {
+              setSession(session);
+              setUser(session.user);
+            }
+          });
+          
+          return () => {
+            mounted = false;
+            initializingRef.current = false;
+            subscription.unsubscribe();
+          };
+        }
+      }
+    }
+    
+    // No valid stored session - set up normal listener and wait for auth events
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return;
       
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        const profileData = await fetchProfile(session.user.id);
-        if (mounted) setProfile(profileData);
-      } else {
-        setProfile(null);
-      }
-      
-      if (mounted) {
-        setLoading(false);
-        setInitialized(true);
-      }
-    };
-
-    // Set up auth state change listener FIRST (Supabase recommended pattern)
-    // This ensures we catch INITIAL_SESSION event
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (!mounted) return;
-      
-      console.log('Auth state change:', event);
-      
-      // Skip if we're in the middle of a signIn operation (it handles state updates directly)
       if (isSigningInRef.current && event === 'SIGNED_IN') {
         isSigningInRef.current = false;
         return;
       }
       
-      // Handle INITIAL_SESSION or any other auth event
-      if (event === 'INITIAL_SESSION' || !hasInitialized) {
-        hasInitialized = true;
-        await handleAuthChange(session);
+      setSession(session);
+      setUser(session?.user ?? null);
+      
+      if (session?.user) {
+        fetchProfile(session.user.id).then(profileData => {
+          if (mounted) setProfile(profileData);
+        });
       } else {
-        // Handle subsequent auth changes
-        await handleAuthChange(session);
+        setProfile(null);
       }
+      
+      setLoading(false);
+      setInitialized(true);
     });
-
-    // Also try to get session directly as a fallback (with timeout)
-    const sessionPromise = supabase.auth.getSession();
-    const timeoutPromise = new Promise<{ data: { session: null } }>((resolve) => {
-      setTimeout(() => resolve({ data: { session: null } }), 3000);
-    });
-
-    Promise.race([sessionPromise, timeoutPromise])
-      .then(({ data: { session } }) => {
-        if (!mounted) return;
-        if (!hasInitialized) {
-          console.log('Initial session loaded (fallback):', session ? 'logged in' : 'no session');
-          hasInitialized = true;
-          handleAuthChange(session);
-        }
-      })
-      .catch((err) => {
-        console.error('Error getting initial session:', err);
-        if (!mounted) return;
-        if (!hasInitialized) {
-          hasInitialized = true;
-          setLoading(false);
-          setInitialized(true);
-        }
-      });
+    
+    // Fallback for no-session case - don't wait forever
+    const fallbackTimer = setTimeout(() => {
+      if (!mounted || initialized) return;
+      setLoading(false);
+      setInitialized(true);
+    }, 2000);
 
     return () => {
       mounted = false;
+      initializingRef.current = false;
+      clearTimeout(fallbackTimer);
       subscription.unsubscribe();
     };
-  }, [fetchProfile]);
+  }, [fetchProfile, initialized]);
 
   const signIn = async (email: string, password: string) => {
     isSigningInRef.current = true;
+    
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -140,15 +211,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw error;
       }
 
-      // Directly update state instead of relying on onAuthStateChange race condition
       if (data.session && data.user) {
+        // Session is already set on Supabase client by signInWithPassword
         setSession(data.session);
         setUser(data.user);
-        const profileData = await fetchProfile(data.user.id);
-        setProfile(profileData);
+        
+        fetchProfile(data.user.id).then(profileData => {
+          setProfile(profileData);
+        });
+        
         setLoading(false);
         setInitialized(true);
-        // Reset flag after a brief delay to allow state to propagate
+        
         setTimeout(() => {
           isSigningInRef.current = false;
         }, 100);
@@ -164,6 +238,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
+    setUser(null);
+    setSession(null);
     setProfile(null);
   };
 
@@ -196,4 +272,3 @@ export function useAuth() {
   }
   return context;
 }
-

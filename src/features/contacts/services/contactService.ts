@@ -1,5 +1,4 @@
-import { supabase } from '@/lib/supabase/client';
-import { buildRawCustomAttributeFilter } from '@/lib/supabase/jsonbQuery';
+import { restClient, getCurrentUserId } from '@/lib/supabase/restClient';
 import type {
   ContactSearchParams,
   ContactCreatePayload,
@@ -14,11 +13,9 @@ export const contactService = {
    * Get a single contact by ID with related data
    */
   async getById(id: string): Promise<Contact | null> {
-    const { data, error } = await supabase
-      .from('contacts')
-      .select('*')
-      .eq('id', id)
-      .single();
+    const { data, error } = await restClient.querySingle<Contact>('contacts', {
+      filters: [{ column: 'id', operator: 'eq', value: id }],
+    });
 
     if (error) {
       console.error('Error fetching contact:', error);
@@ -42,55 +39,35 @@ export const contactService = {
       sortOrder = 'desc',
       tags,
       createdBy,
-      hasOrganization,
-      customAttributeFilters,
     } = params;
 
-    let queryBuilder = supabase.from('contacts').select('*', { count: 'exact' });
+    const filters: Array<{ column: string; operator: 'eq' | 'cs' | 'fts'; value: unknown }> = [];
 
     // Full-text search
     if (query) {
-      queryBuilder = queryBuilder.textSearch('search_vector', query);
+      filters.push({ column: 'search_vector', operator: 'fts', value: query });
     }
 
     // Filter by tags
     if (tags && tags.length > 0) {
-      queryBuilder = queryBuilder.contains('tags', tags);
+      filters.push({ column: 'tags', operator: 'cs', value: tags });
     }
 
     // Filter by creator
     if (createdBy) {
-      queryBuilder = queryBuilder.eq('created_by', createdBy);
+      filters.push({ column: 'created_by', operator: 'eq', value: createdBy });
     }
-
-    // Filter by organization link existence
-    if (hasOrganization !== undefined) {
-      // This would require a join or subquery - simplified for now
-      // In production, you might want to use a view or function
-    }
-
-    // Apply custom attribute filters
-    if (customAttributeFilters && customAttributeFilters.length > 0) {
-      for (const filter of customAttributeFilters) {
-        const rawFilter = buildRawCustomAttributeFilter(
-          filter.category,
-          filter.key,
-          filter.value,
-          filter.operator
-        );
-        queryBuilder = queryBuilder.or(rawFilter);
-      }
-    }
-
-    // Sorting
-    queryBuilder = queryBuilder.order(sortBy, { ascending: sortOrder === 'asc' });
 
     // Pagination
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;
-    queryBuilder = queryBuilder.range(from, to);
 
-    const { data, error, count } = await queryBuilder;
+    const { data, error, count } = await restClient.query<Contact>('contacts', {
+      filters,
+      order: { column: sortBy, ascending: sortOrder === 'asc' },
+      range: { from, to },
+      count: 'exact',
+    });
 
     if (error) {
       console.error('Error searching contacts:', error);
@@ -113,18 +90,14 @@ export const contactService = {
     filter: CustomAttributeFilter,
     limit = 50
   ): Promise<Contact[]> {
-    const rawFilter = buildRawCustomAttributeFilter(
-      filter.category,
-      filter.key,
-      filter.value,
-      filter.operator
-    );
+    // Build the raw filter for custom attributes in JSONB
+    const jsonPath = `custom_attributes->${filter.category}->${filter.key}`;
+    const rawFilter = `${jsonPath}.eq.${filter.value}`;
 
-    const { data, error } = await supabase
-      .from('contacts')
-      .select('*')
-      .or(rawFilter)
-      .limit(limit);
+    const { data, error } = await restClient.query<Contact>('contacts', {
+      filters: [{ column: 'or', operator: 'or', value: rawFilter }],
+      limit,
+    });
 
     if (error) {
       console.error('Error searching by custom attribute:', error);
@@ -138,20 +111,20 @@ export const contactService = {
    * Get contacts with upcoming birthdays
    */
   async getUpcomingBirthdays(daysAhead = 30, limit = 20): Promise<Contact[]> {
-    // Use the database function or raw query for birthday filtering
-    const { data, error } = await supabase
-      .from('contacts')
-      .select('*')
-      .not('custom_attributes->personal->birthday', 'is', null)
-      .limit(limit);
+    // Fetch contacts that have a birthday set
+    const { data, error } = await restClient.query<Contact>('contacts', {
+      filters: [
+        { column: 'custom_attributes->personal->birthday', operator: 'neq' as 'eq', value: null },
+      ],
+      limit,
+    });
 
     if (error) {
       console.error('Error fetching upcoming birthdays:', error);
       throw error;
     }
 
-    // Filter birthdays client-side for now
-    // In production, use the buildUpcomingBirthdaysFilter with rpc call
+    // Filter birthdays client-side
     const today = new Date();
     const endDate = new Date(today.getTime() + daysAhead * 24 * 60 * 60 * 1000);
 
@@ -180,26 +153,20 @@ export const contactService = {
    * Create a new contact
    */
   async create(payload: ContactCreatePayload): Promise<Contact> {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const userId = getCurrentUserId();
 
-    if (!user) {
+    if (!userId) {
       throw new Error('User not authenticated');
     }
 
-    const { data, error } = await supabase
-      .from('contacts')
-      .insert({
-        ...payload,
-        created_by: user.id,
-        emails: payload.emails || [],
-        phones: payload.phones || [],
-        addresses: payload.addresses || [],
-        tags: payload.tags || [],
-      })
-      .select()
-      .single();
+    const { data, error } = await restClient.insert<Contact>('contacts', {
+      ...payload,
+      created_by: userId,
+      emails: payload.emails || [],
+      phones: payload.phones || [],
+      addresses: payload.addresses || [],
+      tags: payload.tags || [],
+    });
 
     if (error) {
       console.error('Error creating contact:', error);
@@ -215,12 +182,11 @@ export const contactService = {
   async update(payload: ContactUpdatePayload): Promise<Contact> {
     const { id, ...updateData } = payload;
 
-    const { data, error } = await supabase
-      .from('contacts')
-      .update(updateData)
-      .eq('id', id)
-      .select()
-      .single();
+    const { data, error } = await restClient.update<Contact>(
+      'contacts',
+      updateData,
+      [{ column: 'id', operator: 'eq', value: id }]
+    );
 
     if (error) {
       console.error('Error updating contact:', error);
@@ -234,7 +200,10 @@ export const contactService = {
    * Delete a contact
    */
   async delete(id: string): Promise<void> {
-    const { error } = await supabase.from('contacts').delete().eq('id', id);
+    const { error } = await restClient.remove(
+      'contacts',
+      [{ column: 'id', operator: 'eq', value: id }]
+    );
 
     if (error) {
       console.error('Error deleting contact:', error);
@@ -249,12 +218,11 @@ export const contactService = {
     contactId: string,
     limit = 50
   ): Promise<Activity[]> {
-    const { data, error } = await supabase
-      .from('activities')
-      .select('*')
-      .eq('contact_id', contactId)
-      .order('occurred_at', { ascending: false })
-      .limit(limit);
+    const { data, error } = await restClient.query<Activity>('activities', {
+      filters: [{ column: 'contact_id', operator: 'eq', value: contactId }],
+      order: { column: 'occurred_at', ascending: false },
+      limit,
+    });
 
     if (error) {
       console.error('Error fetching contact activities:', error);
@@ -264,4 +232,3 @@ export const contactService = {
     return (data || []) as Activity[];
   },
 };
-

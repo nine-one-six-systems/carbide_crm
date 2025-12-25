@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
+import { Plus } from 'lucide-react';
 
 import { ValidatedSelect } from '@/components/forms/ValidatedSelect';
 import { ValidatedTextarea } from '@/components/forms/ValidatedTextarea';
@@ -17,6 +18,8 @@ import {
 } from '@/components/ui/dialog';
 import { Form } from '@/components/ui/form';
 import { useContacts } from '@/features/contacts/hooks/useContacts';
+import { ContactForm } from '@/features/contacts/components/ContactForm';
+import type { Contact } from '@/types/database';
 
 import { useInterpersonalMutations } from '../hooks/useInterpersonalRelationships';
 
@@ -52,7 +55,8 @@ export function AddSecondaryRelationshipDialog({
   trigger,
 }: AddSecondaryRelationshipDialogProps) {
   const [open, setOpen] = useState(false);
-  const { data: contactsData } = useContacts({ page: 1, pageSize: 100 });
+  const [createContactDialogOpen, setCreateContactDialogOpen] = useState(false);
+  const { data: contactsData, refetch: refetchContacts } = useContacts({ page: 1, pageSize: 100 });
   const { createSecondary, isCreatingSecondary } = useInterpersonalMutations();
 
   const form = useForm<RelationshipFormValues>({
@@ -71,6 +75,15 @@ export function AddSecondaryRelationshipDialog({
         value: c.id,
         label: `${c.first_name} ${c.last_name}`,
       })) || [];
+
+  const handleContactCreated = async (createdContact: Contact) => {
+    // Refetch contacts to ensure the list is up to date
+    await refetchContacts();
+    // Set the newly created contact as selected
+    form.setValue('related_contact_id', createdContact.id);
+    // Close the create dialog
+    setCreateContactDialogOpen(false);
+  };
 
   const onSubmit = async (values: RelationshipFormValues) => {
     try {
@@ -101,12 +114,48 @@ export function AddSecondaryRelationshipDialog({
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <ValidatedSelect
-              name="related_contact_id"
-              label="Related Contact"
-              placeholder="Select a contact"
-              options={contactOptions}
-            />
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label htmlFor="related_contact_id" className="text-sm font-medium">
+                  Related Contact
+                </label>
+                <Dialog open={createContactDialogOpen} onOpenChange={setCreateContactDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 text-xs"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setCreateContactDialogOpen(true);
+                      }}
+                    >
+                      <Plus className="h-3 w-3 mr-1" />
+                      Create New
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                      <DialogTitle>Create New Contact</DialogTitle>
+                      <DialogDescription>
+                        Create a new contact to add as a relationship. The contact will be automatically selected after creation.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <ContactForm
+                      onContactCreated={handleContactCreated}
+                      onCancel={() => setCreateContactDialogOpen(false)}
+                    />
+                  </DialogContent>
+                </Dialog>
+              </div>
+              <ValidatedSelect
+                name="related_contact_id"
+                label=""
+                placeholder="Select a contact"
+                options={contactOptions}
+              />
+            </div>
             <ValidatedSelect
               name="relationship_type"
               label="Relationship Type"

@@ -1,4 +1,4 @@
-import { format } from 'date-fns';
+import { format, formatDistanceToNow } from 'date-fns';
 import {
   Phone,
   Mail,
@@ -15,6 +15,7 @@ import { Link } from 'react-router-dom';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 import type { Activity } from '@/types/database';
 
 interface ActivityItemProps {
@@ -63,9 +64,19 @@ const activityLabels: Record<string, string> = {
   task_dismissed: 'Task Dismissed',
 };
 
+const getActivityColor = (type: string): string => {
+  if (type === 'note') return 'bg-blue-100 text-blue-700';
+  if (type.startsWith('call')) return 'bg-green-100 text-green-700';
+  if (type.startsWith('email')) return 'bg-purple-100 text-purple-700';
+  if (type.startsWith('text')) return 'bg-yellow-100 text-yellow-700';
+  if (type.startsWith('meeting')) return 'bg-orange-100 text-orange-700';
+  return 'bg-gray-100 text-gray-700';
+};
+
 export function ActivityItem({ activity }: ActivityItemProps) {
   const Icon = activityIcons[activity.type] || FileText;
   const label = activityLabels[activity.type] || activity.type;
+  const iconColor = getActivityColor(activity.type);
 
   const entity = activity.contact || activity.organization;
   const entityName = activity.contact
@@ -78,33 +89,33 @@ export function ActivityItem({ activity }: ActivityItemProps) {
       ? `/organizations/${activity.organization.id}`
       : null;
 
+  const occurredAt = new Date(activity.occurred_at);
+  const relativeTime = formatDistanceToNow(occurredAt, { addSuffix: true });
+
   return (
-    <div className="flex gap-3 pb-4 border-b last:border-0">
-      <Avatar className="h-8 w-8 shrink-0">
-        <AvatarImage
-          src={activity.logged_by_user?.avatar_url || undefined}
-          alt={activity.logged_by_user?.full_name || 'User'}
-        />
-        <AvatarFallback className="text-xs">
-          {activity.logged_by_user?.full_name
-            ?.split(' ')
-            .map((n) => n[0])
-            .join('')
-            .toUpperCase() || 'U'}
-        </AvatarFallback>
-      </Avatar>
+    <div className="flex gap-3 pb-4 border-b last:border-0 relative group">
+      {/* Timeline connector line */}
+      <div className="absolute left-4 top-8 bottom-0 w-0.5 bg-border" />
+      
+      {/* Icon circle */}
+      <div className={cn('h-8 w-8 rounded-full flex items-center justify-center shrink-0 relative z-10', iconColor)}>
+        <Icon className="h-4 w-4" />
+      </div>
+      
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1">
-          <Icon className="h-4 w-4 text-muted-foreground shrink-0" />
           <span className="text-sm font-medium">{label}</span>
           {entityLink && (
             <Link
               to={entityLink}
-              className="text-sm text-primary hover:underline truncate"
+              className="text-sm text-emerald-600 hover:underline truncate"
             >
               {entityName}
             </Link>
           )}
+          <span className="text-xs text-muted-foreground ml-auto">
+            {relativeTime}
+          </span>
         </div>
         {activity.subject && (
           <p className="text-sm font-medium mb-1">{activity.subject}</p>
@@ -123,12 +134,29 @@ export function ActivityItem({ activity }: ActivityItemProps) {
             )}
           </div>
         )}
-        <p className="text-xs text-muted-foreground mt-1">
-          {format(new Date(activity.occurred_at), 'MMM d, yyyy h:mm a')}
+        <div className="flex items-center gap-2 mt-2">
+          <Avatar className="h-5 w-5">
+            <AvatarImage
+              src={activity.logged_by_user?.avatar_url || undefined}
+              alt={activity.logged_by_user?.full_name || 'User'}
+            />
+            <AvatarFallback className="text-xs">
+              {activity.logged_by_user?.full_name
+                ?.split(' ')
+                .map((n) => n[0])
+                .join('')
+                .toUpperCase() || 'U'}
+            </AvatarFallback>
+          </Avatar>
           {activity.logged_by_user && (
-            <> • by {activity.logged_by_user.full_name}</>
+            <span className="text-xs text-muted-foreground">
+              {activity.logged_by_user.full_name}
+            </span>
           )}
-        </p>
+          <span className="text-xs text-muted-foreground">
+            • {format(occurredAt, 'MMM d, h:mm a')}
+          </span>
+        </div>
       </div>
     </div>
   );

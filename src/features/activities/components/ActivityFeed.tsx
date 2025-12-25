@@ -1,132 +1,117 @@
 import { useState, useMemo } from 'react';
 
+import { Filter, FileText, Star } from 'lucide-react';
+
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import type { Activity, ActivityType } from '@/types/database';
 
 import { ActivityItem } from './ActivityItem';
+import { ActivityFeedHeader } from './ActivityFeedHeader';
 
-type ActivityFilter = 'all' | 'calls' | 'emails' | 'texts' | 'meetings' | 'notes' | 'system';
+type ActivityFilter = 'all' | 'notes' | 'files' | 'starred';
 
-const filterConfig: Record<ActivityFilter, { label: string; types: ActivityType[] }> = {
-  all: { label: 'All', types: [] },
-  calls: {
-    label: 'Calls',
-    types: ['call_inbound', 'call_outbound'],
-  },
-  emails: {
-    label: 'Emails',
-    types: ['email_inbound', 'email_outbound'],
-  },
-  texts: {
-    label: 'Texts',
-    types: ['text_inbound', 'text_outbound'],
-  },
-  meetings: {
-    label: 'Meetings',
-    types: ['meeting_in_person', 'meeting_virtual'],
-  },
-  notes: {
-    label: 'Notes',
-    types: ['note'],
-  },
-  system: {
-    label: 'System',
-    types: [
-      'stage_change',
-      'relationship_created',
-      'cadence_applied',
-      'cadence_cleared',
-      'cadence_paused',
-      'cadence_resumed',
-      'task_completed',
-      'task_triaged',
-      'task_dismissed',
-    ],
-  },
+const filterConfig: Record<ActivityFilter, { label: string; icon: React.ComponentType<{ className?: string }> }> = {
+  all: { label: 'All', icon: FileText },
+  notes: { label: 'Notes', icon: FileText },
+  files: { label: 'Files', icon: FileText },
+  starred: { label: 'Starred', icon: Star },
 };
 
 interface ActivityFeedProps {
   activities: Activity[];
-  showFilters?: boolean;
+  contactId: string;
+  showHeader?: boolean;
 }
 
-export function ActivityFeed({ activities, showFilters = true }: ActivityFeedProps) {
+export function ActivityFeed({ activities, contactId, showHeader = true }: ActivityFeedProps) {
   const [filter, setFilter] = useState<ActivityFilter>('all');
 
   const filteredActivities = useMemo(() => {
     if (filter === 'all') return activities;
-    const allowedTypes = filterConfig[filter].types;
-    return activities.filter((a) => allowedTypes.includes(a.type));
+    if (filter === 'notes') {
+      return activities.filter((a) => a.type === 'note');
+    }
+    if (filter === 'files') {
+      // Files filter - placeholder for future file attachments
+      return [];
+    }
+    if (filter === 'starred') {
+      // Starred filter - placeholder for future starring feature
+      return [];
+    }
+    return activities;
   }, [activities, filter]);
 
   const filterCounts = useMemo(() => {
-    const counts: Record<ActivityFilter, number> = {
+    const notesCount = activities.filter((a) => a.type === 'note').length;
+    return {
       all: activities.length,
-      calls: 0,
-      emails: 0,
-      texts: 0,
-      meetings: 0,
-      notes: 0,
-      system: 0,
+      notes: notesCount,
+      files: 0, // Placeholder
+      starred: 0, // Placeholder
     };
-
-    activities.forEach((activity) => {
-      Object.entries(filterConfig).forEach(([key, config]) => {
-        if (key !== 'all' && config.types.includes(activity.type)) {
-          counts[key as ActivityFilter]++;
-        }
-      });
-    });
-
-    return counts;
   }, [activities]);
 
-  if (activities.length === 0) {
-    return (
-      <p className="text-sm text-muted-foreground text-center py-8">
-        No activities yet
-      </p>
-    );
-  }
-
   return (
-    <div className="space-y-4">
-      {showFilters && (
-        <Tabs value={filter} onValueChange={(v) => setFilter(v as ActivityFilter)}>
-          <TabsList className="h-auto flex-wrap justify-start gap-1 bg-transparent p-0">
-            {(Object.keys(filterConfig) as ActivityFilter[]).map((key) => (
-              <TabsTrigger
+    <div className="flex flex-col h-full">
+      {showHeader && <ActivityFeedHeader contactId={contactId} />}
+      
+      {/* Activity Filters */}
+      <div className="px-4 py-2 border-b bg-gray-50 flex items-center justify-between">
+        <div className="flex items-center gap-1">
+          {(Object.keys(filterConfig) as ActivityFilter[]).map((key) => {
+            const Icon = filterConfig[key].icon;
+            const count = filterCounts[key];
+            const isActive = filter === key;
+            
+            return (
+              <Button
                 key={key}
-                value={key}
-                className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-full px-3 py-1 text-sm"
+                variant={isActive ? 'default' : 'ghost'}
+                size="sm"
+                className={`rounded-full px-3 h-7 text-sm ${
+                  isActive ? 'bg-emerald-500 hover:bg-emerald-600 text-white' : ''
+                }`}
+                onClick={() => setFilter(key)}
               >
+                <Icon className="h-3.5 w-3.5 mr-1.5" />
                 {filterConfig[key].label}
-                {filterCounts[key] > 0 && (
+                {count > 0 && (
                   <Badge
-                    variant="secondary"
-                    className="ml-1.5 h-5 min-w-5 px-1 text-xs"
+                    variant={isActive ? 'secondary' : 'outline'}
+                    className="ml-1.5 h-4 min-w-4 px-1 text-xs"
                   >
-                    {filterCounts[key]}
+                    {count}
                   </Badge>
                 )}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
-      )}
-
-      {filteredActivities.length === 0 ? (
-        <p className="text-sm text-muted-foreground text-center py-8">
-          No {filterConfig[filter].label.toLowerCase()} activities
-        </p>
-      ) : (
-        <div className="space-y-4">
-          {filteredActivities.map((activity) => (
-            <ActivityItem key={activity.id} activity={activity} />
-          ))}
+              </Button>
+            );
+          })}
         </div>
-      )}
+        <Button variant="ghost" size="sm" className="h-7">
+          <Filter className="h-3.5 w-3.5 mr-1.5" />
+          Filters
+        </Button>
+      </div>
+
+      {/* Activity Timeline */}
+      <ScrollArea className="flex-1">
+        <div className="p-4">
+          {filteredActivities.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-8">
+              No {filterConfig[filter].label.toLowerCase()} activities
+            </p>
+          ) : (
+            <div className="space-y-4">
+              {filteredActivities.map((activity) => (
+                <ActivityItem key={activity.id} activity={activity} />
+              ))}
+            </div>
+          )}
+        </div>
+      </ScrollArea>
     </div>
   );
 }

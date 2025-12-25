@@ -15,7 +15,7 @@ export default function ContactDetailPage() {
   }
 
   return (
-    <PageContainer>
+    <PageContainer fullWidth>
       <ContactDetail contactId={id} />
     </PageContainer>
   );

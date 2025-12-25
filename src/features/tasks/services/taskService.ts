@@ -1,6 +1,11 @@
-import { supabase } from '@/lib/supabase/client';
-import type { TaskSearchParams, PaginatedResponse } from '@/types/api';
+import { restClient, getCurrentUserId } from '@/lib/supabase/restClient';
+import type { TaskSearchParams } from '@/types/api';
 import type { ManualTask, CadenceTask, UnifiedTask } from '@/types/database';
+
+// Select strings for tasks with related data
+const MANUAL_TASK_SELECT = `*, contact:contacts(id, first_name, last_name), organization:organizations(id, name), assigned_user:profiles!assigned_to(id, full_name)`;
+
+const CADENCE_TASK_SELECT = `*, cadence_step:cadence_steps(*), contact:contacts(id, first_name, last_name), assigned_user:profiles!assigned_to(id, full_name)`;
 
 export const taskService = {
   /**
@@ -20,11 +25,13 @@ export const taskService = {
 
     const statusArray = Array.isArray(status) ? status : [status];
 
-    const { data, error } = await supabase.rpc('get_user_tasks', {
-      p_user_id: userId,
-      p_status: statusArray,
-      p_from_date: dueDateFrom || null,
-      p_to_date: dueDateTo || null,
+    const { data, error } = await restClient.rpc<UnifiedTask[]>('get_user_tasks', {
+      args: {
+        p_user_id: userId,
+        p_status: statusArray,
+        p_from_date: dueDateFrom || null,
+        p_to_date: dueDateTo || null,
+      },
     });
 
     if (error) {
@@ -51,18 +58,10 @@ export const taskService = {
    * Get a single manual task by ID
    */
   async getManualTaskById(id: string): Promise<ManualTask | null> {
-    const { data, error } = await supabase
-      .from('manual_tasks')
-      .select(
-        `
-        *,
-        contact:contacts(id, first_name, last_name),
-        organization:organizations(id, name),
-        assigned_user:profiles!assigned_to(id, full_name)
-      `
-      )
-      .eq('id', id)
-      .single();
+    const { data, error } = await restClient.querySingle<ManualTask>('manual_tasks', {
+      select: MANUAL_TASK_SELECT,
+      filters: [{ column: 'id', operator: 'eq', value: id }],
+    });
 
     if (error) {
       console.error('Error fetching manual task:', error);
@@ -76,18 +75,10 @@ export const taskService = {
    * Get a single cadence task by ID
    */
   async getCadenceTaskById(id: string): Promise<CadenceTask | null> {
-    const { data, error } = await supabase
-      .from('cadence_tasks')
-      .select(
-        `
-        *,
-        cadence_step:cadence_steps(*),
-        contact:contacts(id, first_name, last_name),
-        assigned_user:profiles!assigned_to(id, full_name)
-      `
-      )
-      .eq('id', id)
-      .single();
+    const { data, error } = await restClient.querySingle<CadenceTask>('cadence_tasks', {
+      select: CADENCE_TASK_SELECT,
+      filters: [{ column: 'id', operator: 'eq', value: id }],
+    });
 
     if (error) {
       console.error('Error fetching cadence task:', error);
@@ -110,11 +101,7 @@ export const taskService = {
     assigned_to: string;
     notes?: string;
   }): Promise<ManualTask> {
-    const { data, error } = await supabase
-      .from('manual_tasks')
-      .insert(payload)
-      .select()
-      .single();
+    const { data, error } = await restClient.insert<ManualTask>('manual_tasks', payload);
 
     if (error) {
       console.error('Error creating manual task:', error);
@@ -131,12 +118,11 @@ export const taskService = {
     id: string,
     payload: Partial<Omit<ManualTask, 'id' | 'created_at'>>
   ): Promise<ManualTask> {
-    const { data, error } = await supabase
-      .from('manual_tasks')
-      .update(payload)
-      .eq('id', id)
-      .select()
-      .single();
+    const { data, error } = await restClient.update<ManualTask>(
+      'manual_tasks',
+      payload,
+      [{ column: 'id', operator: 'eq', value: id }]
+    );
 
     if (error) {
       console.error('Error updating manual task:', error);
@@ -153,12 +139,11 @@ export const taskService = {
     id: string,
     payload: Partial<Omit<CadenceTask, 'id' | 'applied_cadence_id' | 'cadence_step_id' | 'contact_id'>>
   ): Promise<CadenceTask> {
-    const { data, error } = await supabase
-      .from('cadence_tasks')
-      .update(payload)
-      .eq('id', id)
-      .select()
-      .single();
+    const { data, error } = await restClient.update<CadenceTask>(
+      'cadence_tasks',
+      payload,
+      [{ column: 'id', operator: 'eq', value: id }]
+    );
 
     if (error) {
       console.error('Error updating cadence task:', error);
@@ -176,17 +161,15 @@ export const taskService = {
     taskSource: 'cadence' | 'manual',
     notes: string
   ): Promise<void> {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const userId = getCurrentUserId();
 
-    if (!user) {
+    if (!userId) {
       throw new Error('User not authenticated');
     }
 
     const updatePayload = {
       status: 'completed' as const,
-      completed_by: user.id,
+      completed_by: userId,
       completed_at: new Date().toISOString(),
       notes,
     };
@@ -238,10 +221,10 @@ export const taskService = {
    * Delete a manual task
    */
   async deleteManualTask(id: string): Promise<void> {
-    const { error } = await supabase
-      .from('manual_tasks')
-      .delete()
-      .eq('id', id);
+    const { error } = await restClient.remove(
+      'manual_tasks',
+      [{ column: 'id', operator: 'eq', value: id }]
+    );
 
     if (error) {
       console.error('Error deleting manual task:', error);
@@ -249,4 +232,3 @@ export const taskService = {
     }
   },
 };
-

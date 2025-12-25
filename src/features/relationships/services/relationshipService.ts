@@ -1,27 +1,22 @@
-import { supabase } from '@/lib/supabase/client';
+import { restClient } from '@/lib/supabase/restClient';
 import type {
   RelationshipSearchParams,
   PaginatedResponse,
 } from '@/types/api';
 import type { BusinessRelationship } from '@/types/database';
 
+// Select string for relationships with related data
+const RELATIONSHIP_SELECT = `*, contact:contacts(id, first_name, last_name, avatar_url), organization:organizations(id, name, logo_url), owner:profiles!owner_id(id, full_name, avatar_url)`;
+
 export const relationshipService = {
   /**
    * Get a single relationship by ID
    */
   async getById(id: string): Promise<BusinessRelationship | null> {
-    const { data, error } = await supabase
-      .from('business_relationships')
-      .select(
-        `
-        *,
-        contact:contacts(id, first_name, last_name, avatar_url),
-        organization:organizations(id, name, logo_url),
-        owner:profiles!owner_id(id, full_name, avatar_url)
-      `
-      )
-      .eq('id', id)
-      .single();
+    const { data, error } = await restClient.querySingle<BusinessRelationship>('business_relationships', {
+      select: RELATIONSHIP_SELECT,
+      filters: [{ column: 'id', operator: 'eq', value: id }],
+    });
 
     if (error) {
       console.error('Error fetching relationship:', error);
@@ -38,7 +33,6 @@ export const relationshipService = {
     params: RelationshipSearchParams
   ): Promise<PaginatedResponse<BusinessRelationship>> {
     const {
-      query,
       page = 1,
       pageSize = 20,
       sortBy = 'updated_at',
@@ -49,47 +43,39 @@ export const relationshipService = {
       ownerId,
     } = params;
 
-    let queryBuilder = supabase
-      .from('business_relationships')
-      .select(
-        `
-        *,
-        contact:contacts(id, first_name, last_name, avatar_url),
-        organization:organizations(id, name, logo_url),
-        owner:profiles!owner_id(id, full_name, avatar_url)
-      `,
-        { count: 'exact' }
-      );
+    const filters: Array<{ column: string; operator: 'eq' | 'cs'; value: unknown }> = [];
 
     // Filter by type
     if (type) {
-      queryBuilder = queryBuilder.eq('type', type);
+      filters.push({ column: 'type', operator: 'eq', value: type });
     }
 
     // Filter by stage
     if (stage) {
-      queryBuilder = queryBuilder.eq('stage', stage);
+      filters.push({ column: 'stage', operator: 'eq', value: stage });
     }
 
-    // Filter by ventures
+    // Filter by ventures (array contains)
     if (ventures && ventures.length > 0) {
-      queryBuilder = queryBuilder.contains('ventures', ventures);
+      filters.push({ column: 'ventures', operator: 'cs', value: ventures });
     }
 
     // Filter by owner
     if (ownerId) {
-      queryBuilder = queryBuilder.eq('owner_id', ownerId);
+      filters.push({ column: 'owner_id', operator: 'eq', value: ownerId });
     }
-
-    // Sorting
-    queryBuilder = queryBuilder.order(sortBy, { ascending: sortOrder === 'asc' });
 
     // Pagination
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;
-    queryBuilder = queryBuilder.range(from, to);
 
-    const { data, error, count } = await queryBuilder;
+    const { data, error, count } = await restClient.query<BusinessRelationship>('business_relationships', {
+      select: RELATIONSHIP_SELECT,
+      filters,
+      order: { column: sortBy, ascending: sortOrder === 'asc' },
+      range: { from, to },
+      count: 'exact',
+    });
 
     if (error) {
       console.error('Error searching relationships:', error);
@@ -112,18 +98,13 @@ export const relationshipService = {
     type: string,
     stages: string[]
   ): Promise<Record<string, BusinessRelationship[]>> {
-    const { data, error } = await supabase
-      .from('business_relationships')
-      .select(
-        `
-        *,
-        contact:contacts(id, first_name, last_name, avatar_url),
-        organization:organizations(id, name, logo_url),
-        owner:profiles!owner_id(id, full_name, avatar_url)
-      `
-      )
-      .eq('type', type)
-      .in('stage', stages);
+    const { data, error } = await restClient.query<BusinessRelationship>('business_relationships', {
+      select: RELATIONSHIP_SELECT,
+      filters: [
+        { column: 'type', operator: 'eq', value: type },
+        { column: 'stage', operator: 'in', value: stages },
+      ],
+    });
 
     if (error) {
       console.error('Error fetching relationships by stages:', error);
@@ -156,22 +137,15 @@ export const relationshipService = {
     owner_id: string;
     attributes?: Record<string, unknown>;
   }): Promise<BusinessRelationship> {
-    const { data, error } = await supabase
-      .from('business_relationships')
-      .insert({
+    const { data, error } = await restClient.insert<BusinessRelationship>(
+      'business_relationships',
+      {
         ...payload,
         attributes: payload.attributes || {},
         ventures: payload.ventures || [],
-      })
-      .select(
-        `
-        *,
-        contact:contacts(id, first_name, last_name, avatar_url),
-        organization:organizations(id, name, logo_url),
-        owner:profiles!owner_id(id, full_name, avatar_url)
-      `
-      )
-      .single();
+      },
+      { select: RELATIONSHIP_SELECT }
+    );
 
     if (error) {
       console.error('Error creating relationship:', error);
@@ -188,19 +162,12 @@ export const relationshipService = {
     id: string,
     payload: Partial<Omit<BusinessRelationship, 'id' | 'created_at'>>
   ): Promise<BusinessRelationship> {
-    const { data, error } = await supabase
-      .from('business_relationships')
-      .update(payload)
-      .eq('id', id)
-      .select(
-        `
-        *,
-        contact:contacts(id, first_name, last_name, avatar_url),
-        organization:organizations(id, name, logo_url),
-        owner:profiles!owner_id(id, full_name, avatar_url)
-      `
-      )
-      .single();
+    const { data, error } = await restClient.update<BusinessRelationship>(
+      'business_relationships',
+      payload,
+      [{ column: 'id', operator: 'eq', value: id }],
+      { select: RELATIONSHIP_SELECT }
+    );
 
     if (error) {
       console.error('Error updating relationship:', error);
@@ -228,10 +195,10 @@ export const relationshipService = {
    * Delete a relationship
    */
   async delete(id: string): Promise<void> {
-    const { error } = await supabase
-      .from('business_relationships')
-      .delete()
-      .eq('id', id);
+    const { error } = await restClient.remove(
+      'business_relationships',
+      [{ column: 'id', operator: 'eq', value: id }]
+    );
 
     if (error) {
       console.error('Error deleting relationship:', error);
@@ -239,4 +206,3 @@ export const relationshipService = {
     }
   },
 };
-

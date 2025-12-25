@@ -1,14 +1,18 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { ValidatedInput } from '@/components/forms/ValidatedInput';
 import { ValidatedTextarea } from '@/components/forms/ValidatedTextarea';
 import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
 import { Separator } from '@/components/ui/separator';
+import { toast } from '@/components/ui/use-toast';
 import { contactFormSchema, type ContactFormValues } from '@/lib/validators/contact';
 import type { Contact } from '@/types/database';
+import type { ContactCreatePayload, ContactUpdatePayload } from '@/types/api';
 
+import { contactService } from '../services/contactService';
 import { useContactMutations } from '../hooks/useContactMutations';
 import { CustomAttributesForm } from './CustomAttributesForm';
 
@@ -16,11 +20,35 @@ import { CustomAttributesForm } from './CustomAttributesForm';
 interface ContactFormProps {
   contact?: Contact;
   onSuccess?: () => void;
+  onContactCreated?: (contact: Contact) => void;
   onCancel?: () => void;
 }
 
-export function ContactForm({ contact, onSuccess, onCancel }: ContactFormProps) {
-  const { create, update, isCreating, isUpdating } = useContactMutations();
+export function ContactForm({ contact, onSuccess, onContactCreated, onCancel }: ContactFormProps) {
+  const queryClient = useQueryClient();
+  const { update, isUpdating } = useContactMutations();
+  
+  const createMutation = useMutation({
+    mutationFn: (payload: ContactCreatePayload) => contactService.create(payload),
+    onSuccess: (createdContact) => {
+      queryClient.invalidateQueries({ queryKey: ['contacts'] });
+      toast({
+        title: 'Success',
+        description: 'Contact created successfully',
+      });
+      onContactCreated?.(createdContact);
+      onSuccess?.();
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to create contact',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const isCreating = createMutation.isPending;
 
   const form = useForm<ContactFormValues>({
     resolver: zodResolver(contactFormSchema),
@@ -52,16 +80,14 @@ export function ContactForm({ contact, onSuccess, onCancel }: ContactFormProps) 
   });
 
   const onSubmit = (values: ContactFormValues) => {
-    const callbacks = {
-      onSuccess: () => {
-        onSuccess?.();
-      },
-    };
-
     if (contact) {
-      update({ id: contact.id, ...values }, callbacks);
+      update({ id: contact.id, ...values }, {
+        onSuccess: () => {
+          onSuccess?.();
+        },
+      });
     } else {
-      create(values, callbacks);
+      createMutation.mutate(values);
     }
   };
 

@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase/client';
+import { restClient } from '@/lib/supabase/restClient';
 
 import { getPeriodDates } from '../utils/periodUtils';
 
@@ -23,11 +23,13 @@ export const leadershipDashboardService = {
   async getSummary(filters: DashboardFilters): Promise<LeadershipSummary> {
     const { start, end } = getPeriodDates(filters);
 
-    const { data, error } = await supabase.rpc('get_leadership_summary', {
-      p_period_start: start.toISOString(),
-      p_period_end: end.toISOString(),
-      p_venture: filters.venture ?? null,
-      p_owner_id: filters.ownerId ?? null,
+    const { data, error } = await restClient.rpc<LeadershipSummaryRow | LeadershipSummaryRow[]>('get_leadership_summary', {
+      args: {
+        p_period_start: start.toISOString(),
+        p_period_end: end.toISOString(),
+        p_venture: filters.venture ?? null,
+        p_owner_id: filters.ownerId ?? null,
+      },
     });
 
     if (error) {
@@ -52,11 +54,13 @@ export const leadershipDashboardService = {
   async getActivityVolume(filters: DashboardFilters): Promise<ActivityVolume> {
     const { start, end } = getPeriodDates(filters);
 
-    const { data, error } = await supabase.rpc('get_activity_volume', {
-      p_period_start: start.toISOString(),
-      p_period_end: end.toISOString(),
-      p_venture: filters.venture ?? null,
-      p_owner_id: filters.ownerId ?? null,
+    const { data, error } = await restClient.rpc<ActivityVolumeRow | ActivityVolumeRow[]>('get_activity_volume', {
+      args: {
+        p_period_start: start.toISOString(),
+        p_period_end: end.toISOString(),
+        p_venture: filters.venture ?? null,
+        p_owner_id: filters.ownerId ?? null,
+      },
     });
 
     if (error) {
@@ -79,11 +83,13 @@ export const leadershipDashboardService = {
   async getPipelineSummaries(filters: DashboardFilters): Promise<PipelineSummary[]> {
     const { start, end } = getPeriodDates(filters);
 
-    const { data, error } = await supabase.rpc('get_pipeline_summaries', {
-      p_period_start: start.toISOString(),
-      p_period_end: end.toISOString(),
-      p_venture: filters.venture ?? null,
-      p_owner_id: filters.ownerId ?? null,
+    const { data, error } = await restClient.rpc<PipelineSummaryRow[]>('get_pipeline_summaries', {
+      args: {
+        p_period_start: start.toISOString(),
+        p_period_end: end.toISOString(),
+        p_venture: filters.venture ?? null,
+        p_owner_id: filters.ownerId ?? null,
+      },
     });
 
     if (error) {
@@ -116,11 +122,13 @@ export const leadershipDashboardService = {
     filters: DashboardFilters,
     limit = 10
   ): Promise<ColdOpportunity[]> {
-    const { data, error } = await supabase.rpc('get_cold_opportunities', {
-      p_days_threshold: 7,
-      p_limit: limit,
-      p_venture: filters.venture ?? null,
-      p_owner_id: filters.ownerId ?? null,
+    const { data, error } = await restClient.rpc<ColdOpportunityRow[]>('get_cold_opportunities', {
+      args: {
+        p_days_threshold: 7,
+        p_limit: limit,
+        p_venture: filters.venture ?? null,
+        p_owner_id: filters.ownerId ?? null,
+      },
     });
 
     if (error) {
@@ -152,12 +160,14 @@ export const leadershipDashboardService = {
   ): Promise<DashboardActivity[]> {
     const { start, end } = getPeriodDates(filters);
 
-    const { data, error } = await supabase.rpc('get_dashboard_activity', {
-      p_period_start: start.toISOString(),
-      p_period_end: end.toISOString(),
-      p_venture: filters.venture ?? null,
-      p_owner_id: filters.ownerId ?? null,
-      p_limit: limit,
+    const { data, error } = await restClient.rpc<DashboardActivityRow[]>('get_dashboard_activity', {
+      args: {
+        p_period_start: start.toISOString(),
+        p_period_end: end.toISOString(),
+        p_venture: filters.venture ?? null,
+        p_owner_id: filters.ownerId ?? null,
+        p_limit: limit,
+      },
     });
 
     if (error) {
@@ -179,4 +189,3 @@ export const leadershipDashboardService = {
     }));
   },
 };
-

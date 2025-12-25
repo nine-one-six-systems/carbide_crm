@@ -9,6 +9,7 @@ interface PageContainerProps {
   description?: string;
   actions?: ReactNode;
   className?: string;
+  fullWidth?: boolean;
 }
 
 export function PageContainer({
@@ -17,7 +18,16 @@ export function PageContainer({
   description,
   actions,
   className,
+  fullWidth = false,
 }: PageContainerProps) {
+  if (fullWidth) {
+    return (
+      <div className={cn('flex flex-1 flex-col', className)} id="main-content">
+        {children}
+      </div>
+    );
+  }
+
   return (
     <div className={cn('flex flex-1 flex-col', className)} id="main-content">
       <div className="container mx-auto flex-1 space-y-4 p-6">

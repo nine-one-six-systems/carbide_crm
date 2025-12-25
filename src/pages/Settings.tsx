@@ -2,15 +2,15 @@ import { User, Settings2, Bell, ListPlus } from 'lucide-react';
 
 import { PageContainer } from '@/components/layout/PageContainer';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useAuth } from '@/features/auth/hooks/useAuth';
+import { useAuth } from '@/features/auth/context/AuthContext';
 import { CustomFieldsSettings } from '@/features/settings/components/CustomFieldsSettings';
 import { NotificationSettings } from '@/features/settings/components/NotificationSettings';
 import { PreferencesSettings } from '@/features/settings/components/PreferencesSettings';
 import { ProfileSettings } from '@/features/settings/components/ProfileSettings';
 
 export default function SettingsPage() {
-  const { user } = useAuth();
-  const isAdmin = user?.role === 'admin';
+  const { profile } = useAuth();
+  const isAdmin = profile?.role === 'admin';
 
   return (
     <PageContainer

@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase/client';
+import { restClient, getCurrentUserId } from '@/lib/supabase/restClient';
 import type {
   OrganizationSearchParams,
   OrganizationCreatePayload,
@@ -12,11 +12,9 @@ export const organizationService = {
    * Get a single organization by ID
    */
   async getById(id: string): Promise<Organization | null> {
-    const { data, error } = await supabase
-      .from('organizations')
-      .select('*')
-      .eq('id', id)
-      .single();
+    const { data, error } = await restClient.querySingle<Organization>('organizations', {
+      filters: [{ column: 'id', operator: 'eq', value: id }],
+    });
 
     if (error) {
       console.error('Error fetching organization:', error);
@@ -42,34 +40,33 @@ export const organizationService = {
       tags,
     } = params;
 
-    let queryBuilder = supabase
-      .from('organizations')
-      .select('*', { count: 'exact' });
+    const filters: Array<{ column: string; operator: 'eq' | 'cs' | 'fts'; value: unknown }> = [];
 
     // Full-text search
     if (query) {
-      queryBuilder = queryBuilder.textSearch('search_vector', query);
+      filters.push({ column: 'search_vector', operator: 'fts', value: query });
     }
 
     // Filter by type
     if (type) {
-      queryBuilder = queryBuilder.eq('type', type);
+      filters.push({ column: 'type', operator: 'eq', value: type });
     }
 
     // Filter by tags
     if (tags && tags.length > 0) {
-      queryBuilder = queryBuilder.contains('tags', tags);
+      filters.push({ column: 'tags', operator: 'cs', value: tags });
     }
-
-    // Sorting
-    queryBuilder = queryBuilder.order(sortBy, { ascending: sortOrder === 'asc' });
 
     // Pagination
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;
-    queryBuilder = queryBuilder.range(from, to);
 
-    const { data, error, count } = await queryBuilder;
+    const { data, error, count } = await restClient.query<Organization>('organizations', {
+      filters,
+      order: { column: sortBy, ascending: sortOrder === 'asc' },
+      range: { from, to },
+      count: 'exact',
+    });
 
     if (error) {
       console.error('Error searching organizations:', error);
@@ -89,24 +86,18 @@ export const organizationService = {
    * Create a new organization
    */
   async create(payload: OrganizationCreatePayload): Promise<Organization> {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const userId = getCurrentUserId();
 
-    if (!user) {
+    if (!userId) {
       throw new Error('User not authenticated');
     }
 
-    const { data, error } = await supabase
-      .from('organizations')
-      .insert({
-        ...payload,
-        created_by: user.id,
-        addresses: payload.addresses || [],
-        tags: payload.tags || [],
-      })
-      .select()
-      .single();
+    const { data, error } = await restClient.insert<Organization>('organizations', {
+      ...payload,
+      created_by: userId,
+      addresses: payload.addresses || [],
+      tags: payload.tags || [],
+    });
 
     if (error) {
       console.error('Error creating organization:', error);
@@ -122,12 +113,11 @@ export const organizationService = {
   async update(payload: OrganizationUpdatePayload): Promise<Organization> {
     const { id, ...updateData } = payload;
 
-    const { data, error } = await supabase
-      .from('organizations')
-      .update(updateData)
-      .eq('id', id)
-      .select()
-      .single();
+    const { data, error } = await restClient.update<Organization>(
+      'organizations',
+      updateData,
+      [{ column: 'id', operator: 'eq', value: id }]
+    );
 
     if (error) {
       console.error('Error updating organization:', error);
@@ -141,10 +131,10 @@ export const organizationService = {
    * Delete an organization
    */
   async delete(id: string): Promise<void> {
-    const { error } = await supabase
-      .from('organizations')
-      .delete()
-      .eq('id', id);
+    const { error } = await restClient.remove(
+      'organizations',
+      [{ column: 'id', operator: 'eq', value: id }]
+    );
 
     if (error) {
       console.error('Error deleting organization:', error);
@@ -152,4 +142,3 @@ export const organizationService = {
     }
   },
 };
-

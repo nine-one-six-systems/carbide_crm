@@ -16,6 +16,17 @@ if (!supabaseUrl || !supabaseAnonKey) {
   }
 }
 
+/**
+ * Supabase client for authentication only.
+ * 
+ * NOTE: Due to SDK issues (hanging queries in React 19), all database operations
+ * should use the REST client from ./restClient.ts instead.
+ * 
+ * This client is kept for:
+ * - signInWithPassword
+ * - signOut
+ * - onAuthStateChange
+ */
 export const supabase = createClient<Database>(
   supabaseUrl || 'https://placeholder.supabase.co',
   supabaseAnonKey || 'placeholder-key',
@@ -33,4 +44,3 @@ export const supabase = createClient<Database>(
 export const isSupabaseConfigured = () => {
   return !!(supabaseUrl && supabaseAnonKey && !supabaseUrl.includes('placeholder'));
 };
-

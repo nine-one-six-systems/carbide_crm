@@ -114,7 +114,7 @@ export function SalespersonDashboard() {
           <CardHeader>
             <CardTitle>Quick Actions</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2">
+          <CardContent className="flex flex-col gap-2">
             <Link to="/contacts/new">
               <Button variant="outline" className="w-full justify-start">
                 <Plus className="mr-2 h-4 w-4" />

@@ -1,5 +1,8 @@
-import { Users } from 'lucide-react';
+import { useState } from 'react';
 
+import { LayoutGrid, Table as TableIcon, Users } from 'lucide-react';
+
+import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { ContactSearchParams } from '@/types/api';
@@ -7,22 +10,44 @@ import type { ContactSearchParams } from '@/types/api';
 import { useContacts } from '../hooks/useContacts';
 
 import { ContactCard } from './ContactCard';
+import { ContactTable } from './ContactTable';
 
-
+type ViewMode = 'cards' | 'table';
 
 interface ContactListProps {
   searchParams: ContactSearchParams;
+  viewMode?: ViewMode;
+  onViewModeChange?: (mode: ViewMode) => void;
 }
 
-export function ContactList({ searchParams }: ContactListProps) {
+export function ContactList({
+  searchParams,
+  viewMode: controlledViewMode,
+  onViewModeChange,
+}: ContactListProps) {
+  const [internalViewMode, setInternalViewMode] = useState<ViewMode>('table');
+  const viewMode = controlledViewMode ?? internalViewMode;
+  const setViewMode = onViewModeChange ?? setInternalViewMode;
+
   const { data, isLoading, error } = useContacts(searchParams);
 
   if (isLoading) {
     return (
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <Skeleton key={i} className="h-32" />
-        ))}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-9 w-32" />
+        </div>
+        {viewMode === 'cards' ? (
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Skeleton key={i} className="h-32" />
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-md border">
+            <Skeleton className="h-64" />
+          </div>
+        )}
       </div>
     );
   }
@@ -48,10 +73,35 @@ export function ContactList({ searchParams }: ContactListProps) {
   }
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-      {data.data.map((contact) => (
-        <ContactCard key={contact.id} contact={contact} />
-      ))}
+    <div className="space-y-4">
+      <div className="flex items-center justify-end gap-2">
+        <Button
+          variant={viewMode === 'cards' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => setViewMode('cards')}
+        >
+          <LayoutGrid className="h-4 w-4 mr-2" />
+          Cards
+        </Button>
+        <Button
+          variant={viewMode === 'table' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => setViewMode('table')}
+        >
+          <TableIcon className="h-4 w-4 mr-2" />
+          Table
+        </Button>
+      </div>
+
+      {viewMode === 'cards' ? (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {data.data.map((contact) => (
+            <ContactCard key={contact.id} contact={contact} />
+          ))}
+        </div>
+      ) : (
+        <ContactTable contacts={data.data} />
+      )}
     </div>
   );
 }

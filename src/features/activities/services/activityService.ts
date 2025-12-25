@@ -1,6 +1,9 @@
-import { supabase } from '@/lib/supabase/client';
+import { restClient, getCurrentUserId } from '@/lib/supabase/restClient';
 import type { ActivitySearchParams, PaginatedResponse } from '@/types/api';
 import type { Activity } from '@/types/database';
+
+// Select string for activities with related data
+const ACTIVITY_SELECT = `*, contact:contacts(id, first_name, last_name, avatar_url), organization:organizations(id, name, logo_url), logged_by_user:profiles!logged_by(id, full_name, avatar_url)`;
 
 export const activityService = {
   /**
@@ -21,50 +24,42 @@ export const activityService = {
       occurredTo,
     } = params;
 
-    let queryBuilder = supabase
-      .from('activities')
-      .select(
-        `
-        *,
-        contact:contacts(id, first_name, last_name, avatar_url),
-        organization:organizations(id, name, logo_url),
-        logged_by_user:profiles!logged_by(id, full_name, avatar_url)
-      `,
-        { count: 'exact' }
-      );
+    const filters: Array<{ column: string; operator: 'eq' | 'in' | 'gte' | 'lte'; value: unknown }> = [];
 
     // Filter by type
     if (type && type.length > 0) {
-      queryBuilder = queryBuilder.in('type', type);
+      filters.push({ column: 'type', operator: 'in', value: type });
     }
 
     // Filter by contact
     if (contactId) {
-      queryBuilder = queryBuilder.eq('contact_id', contactId);
+      filters.push({ column: 'contact_id', operator: 'eq', value: contactId });
     }
 
     // Filter by organization
     if (organizationId) {
-      queryBuilder = queryBuilder.eq('organization_id', organizationId);
+      filters.push({ column: 'organization_id', operator: 'eq', value: organizationId });
     }
 
     // Filter by date range
     if (occurredFrom) {
-      queryBuilder = queryBuilder.gte('occurred_at', occurredFrom);
+      filters.push({ column: 'occurred_at', operator: 'gte', value: occurredFrom });
     }
     if (occurredTo) {
-      queryBuilder = queryBuilder.lte('occurred_at', occurredTo);
+      filters.push({ column: 'occurred_at', operator: 'lte', value: occurredTo });
     }
-
-    // Sorting
-    queryBuilder = queryBuilder.order(sortBy, { ascending: sortOrder === 'asc' });
 
     // Pagination
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;
-    queryBuilder = queryBuilder.range(from, to);
 
-    const { data, error, count } = await queryBuilder;
+    const { data, error, count } = await restClient.query<Activity>('activities', {
+      select: ACTIVITY_SELECT,
+      filters,
+      order: { column: sortBy, ascending: sortOrder === 'asc' },
+      range: { from, to },
+      count: 'exact',
+    });
 
     if (error) {
       console.error('Error searching activities:', error);
@@ -95,31 +90,22 @@ export const activityService = {
     occurred_at?: string;
     metadata?: Record<string, unknown>;
   }): Promise<Activity> {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const userId = getCurrentUserId();
 
-    if (!user) {
+    if (!userId) {
       throw new Error('User not authenticated');
     }
 
-    const { data, error } = await supabase
-      .from('activities')
-      .insert({
+    const { data, error } = await restClient.insert<Activity>(
+      'activities',
+      {
         ...payload,
-        logged_by: user.id,
+        logged_by: userId,
         occurred_at: payload.occurred_at || new Date().toISOString(),
         metadata: payload.metadata || {},
-      })
-      .select(
-        `
-        *,
-        contact:contacts(id, first_name, last_name, avatar_url),
-        organization:organizations(id, name, logo_url),
-        logged_by_user:profiles!logged_by(id, full_name, avatar_url)
-      `
-      )
-      .single();
+      },
+      { select: ACTIVITY_SELECT }
+    );
 
     if (error) {
       console.error('Error creating activity:', error);
@@ -129,4 +115,3 @@ export const activityService = {
     return data as Activity;
   },
 };
-
