@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -34,6 +35,9 @@ export default function TasksPage() {
           <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>Create New Task</DialogTitle>
+              <DialogDescription>
+                Create a new task to track your work and follow-ups.
+              </DialogDescription>
             </DialogHeader>
             <TaskForm
               onSuccess={() => {

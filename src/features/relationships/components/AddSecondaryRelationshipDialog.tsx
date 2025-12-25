@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -94,6 +95,9 @@ export function AddSecondaryRelationshipDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Add Relationship</DialogTitle>
+          <DialogDescription>
+            Create a relationship between this contact and another contact.
+          </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">

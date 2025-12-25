@@ -43,35 +43,36 @@ export function OrganizationForm({
       ? {
           name: organization.name,
           type: organization.type || null,
-          industry: organization.industry || null,
-          website: organization.website || null,
+          industry: organization.industry || '',
+          website: organization.website || '',
           addresses: organization.addresses || [],
-          description: organization.description || null,
+          description: organization.description || '',
           tags: organization.tags || [],
-          logo_url: organization.logo_url || null,
+          logo_url: organization.logo_url || '',
         }
       : {
           name: '',
           type: null,
-          industry: null,
-          website: null,
+          industry: '',
+          website: '',
           addresses: [],
-          description: null,
+          description: '',
           tags: [],
-          logo_url: null,
+          logo_url: '',
         },
   });
 
-  const onSubmit = async (values: OrganizationFormValues) => {
-    try {
-      if (organization) {
-        await update({ id: organization.id, ...values });
-      } else {
-        await create(values);
-      }
-      onSuccess?.();
-    } catch (error) {
-      console.error('Error saving organization:', error);
+  const onSubmit = (values: OrganizationFormValues) => {
+    const callbacks = {
+      onSuccess: () => {
+        onSuccess?.();
+      },
+    };
+
+    if (organization) {
+      update({ id: organization.id, ...values }, callbacks);
+    } else {
+      create(values, callbacks);
     }
   };
 

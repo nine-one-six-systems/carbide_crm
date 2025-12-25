@@ -1,12 +1,17 @@
-import { User, Settings2, Bell } from 'lucide-react';
+import { User, Settings2, Bell, ListPlus } from 'lucide-react';
 
 import { PageContainer } from '@/components/layout/PageContainer';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useAuth } from '@/features/auth/hooks/useAuth';
+import { CustomFieldsSettings } from '@/features/settings/components/CustomFieldsSettings';
 import { NotificationSettings } from '@/features/settings/components/NotificationSettings';
 import { PreferencesSettings } from '@/features/settings/components/PreferencesSettings';
 import { ProfileSettings } from '@/features/settings/components/ProfileSettings';
 
 export default function SettingsPage() {
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
+
   return (
     <PageContainer
       title="Settings"
@@ -16,7 +21,7 @@ export default function SettingsPage() {
       ]}
     >
       <Tabs defaultValue="profile" className="space-y-6">
-        <TabsList className="grid w-full max-w-md grid-cols-3">
+        <TabsList className={`grid w-full max-w-lg ${isAdmin ? 'grid-cols-4' : 'grid-cols-3'}`}>
           <TabsTrigger value="profile" className="gap-2">
             <User className="h-4 w-4" />
             <span className="hidden sm:inline">Profile</span>
@@ -29,6 +34,12 @@ export default function SettingsPage() {
             <Bell className="h-4 w-4" />
             <span className="hidden sm:inline">Notifications</span>
           </TabsTrigger>
+          {isAdmin && (
+            <TabsTrigger value="custom-fields" className="gap-2">
+              <ListPlus className="h-4 w-4" />
+              <span className="hidden sm:inline">Fields</span>
+            </TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="profile">
@@ -42,6 +53,12 @@ export default function SettingsPage() {
         <TabsContent value="notifications">
           <NotificationSettings />
         </TabsContent>
+
+        {isAdmin && (
+          <TabsContent value="custom-fields">
+            <CustomFieldsSettings />
+          </TabsContent>
+        )}
       </Tabs>
     </PageContainer>
   );

@@ -40,6 +40,7 @@ export const ValidatedTextarea = forwardRef<
               {...props}
               ref={ref}
               className={cn(className)}
+              value={field.value ?? ''}
               onBlur={(e) => {
                 field.onBlur();
                 if (validateOnBlur) {

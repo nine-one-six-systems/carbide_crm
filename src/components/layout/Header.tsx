@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
 import { Search, Bell, User, LogOut } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 import { GlobalSearch } from '@/components/search/GlobalSearch';
 import { ThemeToggle } from '@/components/theme/ThemeToggle';
@@ -15,8 +15,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import { useAuth } from '@/features/auth/context/AuthContext';
 
+import { DashboardSelector } from './DashboardSelector';
 import { MobileSidebar } from './Sidebar';
 
 
@@ -24,7 +26,14 @@ import { MobileSidebar } from './Sidebar';
 export function Header() {
   const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchOpen, setSearchOpen] = useState(false);
+
+  // Show dashboard selector on dashboard-related routes
+  const isDashboardRoute =
+    location.pathname === '/' ||
+    location.pathname === '/dashboard' ||
+    location.pathname === '/leadership';
 
   const handleSignOut = async () => {
     try {
@@ -59,6 +68,13 @@ export function Header() {
           </kbd>
         </Button>
         <GlobalSearch open={searchOpen} onOpenChange={setSearchOpen} />
+
+        {/* Dashboard Selector - visible on dashboard routes */}
+        {isDashboardRoute && (
+          <TooltipProvider delayDuration={300}>
+            <DashboardSelector className="hidden sm:flex border rounded-lg" />
+          </TooltipProvider>
+        )}
 
         <div className="flex items-center gap-2">
           {/* Theme Toggle */}

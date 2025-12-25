@@ -16,13 +16,60 @@ export const phoneEntrySchema = z.object({
 
 // Address entry schema
 export const addressEntrySchema = z.object({
-  street: z.string().optional(),
+  street1: z.string().optional(),
+  street2: z.string().optional(),
   city: z.string().optional(),
   state: z.string().optional(),
-  zip: z.string().optional(),
+  postal_code: z.string().optional(),
   country: z.string().optional(),
   label: z.string().optional(),
 });
+
+// Custom attributes schemas
+export const personalAttributesSchema = z.object({
+  favorite_food: z.string().optional(),
+  favorite_drink: z.string().optional(),
+  coffee_order: z.string().optional(),
+  favorite_restaurant: z.string().optional(),
+  hobbies: z.string().optional(),
+  leisure_activities: z.string().optional(),
+  goals: z.string().optional(),
+  birthday: z.string().optional(),
+  anniversary: z.string().optional(),
+  marital_status: z.string().optional(),
+  dependents: z.string().optional(),
+}).optional();
+
+export const socialAttributesSchema = z.object({
+  linkedin: z.string().url().optional().or(z.literal('')),
+  twitter: z.string().url().optional().or(z.literal('')),
+  facebook: z.string().url().optional().or(z.literal('')),
+  instagram: z.string().url().optional().or(z.literal('')),
+  skype: z.string().optional(),
+  website: z.string().url().optional().or(z.literal('')),
+}).optional();
+
+export const preferenceAttributesSchema = z.object({
+  email_opt_out: z.boolean().optional(),
+  sms_opt_out: z.boolean().optional(),
+  email_opt_out_reason: z.string().optional(),
+}).optional();
+
+export const geoAttributesSchema = z.object({
+  lat: z.number().optional(),
+  lng: z.number().optional(),
+  created_lat: z.number().optional(),
+  created_lng: z.number().optional(),
+  created_address: z.string().optional(),
+}).optional();
+
+export const customAttributesSchema = z.object({
+  personal: personalAttributesSchema,
+  social: socialAttributesSchema,
+  preferences: preferenceAttributesSchema,
+  geo: geoAttributesSchema,
+  legacy: z.record(z.unknown()).optional(),
+}).passthrough().optional();
 
 // Contact form schema with transforms
 export const contactFormSchema = z
@@ -61,18 +108,10 @@ export const contactFormSchema = z
     job_title: z.string().max(200).optional().nullable(),
     description: z.string().max(5000).optional().nullable(),
     tags: z.array(z.string()).default([]),
-    avatar_url: z.string().url().optional().nullable(),
+    avatar_url: z.string().url().optional().nullable().or(z.literal('')),
+    custom_attributes: customAttributesSchema,
   })
-  .refine(
-    (data) => {
-      // At least one email or phone is required
-      return data.emails.length > 0 || data.phones.length > 0;
-    },
-    {
-      message: 'At least one email or phone number is required',
-      path: ['emails'],
-    }
-  );
+;
 
 export type ContactFormValues = z.infer<typeof contactFormSchema>;
 

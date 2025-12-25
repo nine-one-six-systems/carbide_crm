@@ -28,11 +28,20 @@ export interface MutationResponse<T> {
   error: ApiError | null;
 }
 
+// Custom Attributes API types
+export interface CustomAttributeFilter {
+  category: string;
+  key: string;
+  value: string;
+  operator?: 'equals' | 'contains' | 'gt' | 'lt' | 'gte' | 'lte';
+}
+
 // Contact API types
 export interface ContactSearchParams extends SearchParams {
   tags?: string[];
   createdBy?: string;
   hasOrganization?: boolean;
+  customAttributeFilters?: CustomAttributeFilter[];
 }
 
 export interface ContactCreatePayload {
@@ -41,10 +50,11 @@ export interface ContactCreatePayload {
   emails?: Array<{ value: string; label: string; is_primary?: boolean }>;
   phones?: Array<{ value: string; label: string; is_primary?: boolean }>;
   addresses?: Array<{
-    street?: string;
+    street1?: string;
+    street2?: string;
     city?: string;
     state?: string;
-    zip?: string;
+    postal_code?: string;
     country?: string;
     label?: string;
   }>;
@@ -52,6 +62,7 @@ export interface ContactCreatePayload {
   description?: string;
   tags?: string[];
   avatar_url?: string;
+  custom_attributes?: Record<string, Record<string, unknown>>;
 }
 
 export interface ContactUpdatePayload extends Partial<ContactCreatePayload> {
@@ -62,6 +73,7 @@ export interface ContactUpdatePayload extends Partial<ContactCreatePayload> {
 export interface OrganizationSearchParams extends SearchParams {
   type?: string;
   tags?: string[];
+  customAttributeFilters?: CustomAttributeFilter[];
 }
 
 export interface OrganizationCreatePayload {
@@ -70,16 +82,18 @@ export interface OrganizationCreatePayload {
   industry?: string;
   website?: string;
   addresses?: Array<{
-    street?: string;
+    street1?: string;
+    street2?: string;
     city?: string;
     state?: string;
-    zip?: string;
+    postal_code?: string;
     country?: string;
     label?: string;
   }>;
   description?: string;
   tags?: string[];
   logo_url?: string;
+  custom_attributes?: Record<string, Record<string, unknown>>;
 }
 
 export interface OrganizationUpdatePayload extends Partial<OrganizationCreatePayload> {
@@ -157,5 +171,29 @@ export interface ActivityCreatePayload {
   notes?: string;
   occurred_at: string;
   metadata?: Record<string, unknown>;
+}
+
+// Custom Field Definition API types
+export interface CustomFieldDefinitionSearchParams extends SearchParams {
+  entity_type?: 'contact' | 'organization' | 'both';
+  category?: string;
+  is_active?: boolean;
+}
+
+export interface CustomFieldDefinitionCreatePayload {
+  key: string;
+  label: string;
+  field_type: 'text' | 'number' | 'date' | 'boolean' | 'select' | 'multiselect' | 'url' | 'email';
+  category: string;
+  entity_type: 'contact' | 'organization' | 'both';
+  options?: string[];
+  is_required?: boolean;
+  show_on_card?: boolean;
+  display_order?: number;
+}
+
+export interface CustomFieldDefinitionUpdatePayload extends Partial<CustomFieldDefinitionCreatePayload> {
+  id: string;
+  is_active?: boolean;
 }
 

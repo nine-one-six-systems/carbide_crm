@@ -18,6 +18,7 @@ const PipelinesPage = lazy(() => import('@/pages/Pipelines').then((m) => ({ defa
 const TasksPage = lazy(() => import('@/pages/Tasks').then((m) => ({ default: m.default })));
 const BatchTasksPage = lazy(() => import('@/pages/BatchTasks').then((m) => ({ default: m.default })));
 const CadencesPage = lazy(() => import('@/pages/Cadences').then((m) => ({ default: m.default })));
+const LeadershipDashboardPage = lazy(() => import('@/pages/LeadershipDashboard').then((m) => ({ default: m.default })));
 const SettingsPage = lazy(() => import('@/pages/Settings').then((m) => ({ default: m.default })));
 const NotFoundPage = lazy(() => import('@/pages/NotFound').then((m) => ({ default: m.default })));
 
@@ -171,6 +172,18 @@ export function AppRouter() {
             <AppShell>
               <Suspense fallback={<LoadingFallback />}>
                 <CadencesPage />
+              </Suspense>
+            </AppShell>
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: '/leadership',
+        element: (
+          <ProtectedRoute requiredRole={['manager', 'admin']}>
+            <AppShell>
+              <Suspense fallback={<LoadingFallback />}>
+                <LeadershipDashboardPage />
               </Suspense>
             </AppShell>
           </ProtectedRoute>

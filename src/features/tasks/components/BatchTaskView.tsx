@@ -14,6 +14,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
@@ -465,6 +466,9 @@ export function BatchTaskView() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Complete Task</DialogTitle>
+            <DialogDescription>
+              Add notes about completing this task (optional).
+            </DialogDescription>
           </DialogHeader>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(handleComplete)} className="space-y-4">

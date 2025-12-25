@@ -11,6 +11,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -39,8 +40,14 @@ const linkSchema = z.object({
     .optional(),
   is_primary: z.boolean().default(false),
   is_current: z.boolean().default(true),
-  start_date: z.string().optional(),
-  end_date: z.string().optional(),
+  start_date: z
+    .string()
+    .optional()
+    .transform((val) => (val === '' ? undefined : val)),
+  end_date: z
+    .string()
+    .optional()
+    .transform((val) => (val === '' ? undefined : val)),
   notes: z.string().optional(),
 });
 
@@ -96,10 +103,32 @@ export function AddContactToOrgDialog({
 
   const onSubmit = async (values: LinkFormValues) => {
     try {
-      await create({
+      // Filter out empty strings and undefined values for optional fields
+      const payload: Record<string, unknown> = {
         contact_id: contactId,
-        ...values,
-      });
+        organization_id: values.organization_id,
+        is_primary: values.is_primary,
+        is_current: values.is_current,
+      };
+
+      // Only include optional fields if they have values
+      if (values.role_title && values.role_title.trim()) {
+        payload.role_title = values.role_title.trim();
+      }
+      if (values.role_type) {
+        payload.role_type = values.role_type;
+      }
+      if (values.start_date && values.start_date.trim()) {
+        payload.start_date = values.start_date.trim();
+      }
+      if (values.end_date && values.end_date.trim()) {
+        payload.end_date = values.end_date.trim();
+      }
+      if (values.notes && values.notes.trim()) {
+        payload.notes = values.notes.trim();
+      }
+
+      await create(payload as any);
       form.reset();
       setOpen(false);
     } catch (error) {
@@ -115,6 +144,9 @@ export function AddContactToOrgDialog({
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>Add Contact to Organization</DialogTitle>
+          <DialogDescription>
+            Associate this contact with an organization and specify their role.
+          </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">

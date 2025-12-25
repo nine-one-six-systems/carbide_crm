@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -94,6 +95,9 @@ export function LogActivityDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Log Activity</DialogTitle>
+          <DialogDescription>
+            Record an activity or interaction with this contact.
+          </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">

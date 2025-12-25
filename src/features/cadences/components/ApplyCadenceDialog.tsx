@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -78,6 +79,9 @@ export function ApplyCadenceDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Apply Cadence</DialogTitle>
+          <DialogDescription>
+            Apply a cadence template to automate outreach for this contact.
+          </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">

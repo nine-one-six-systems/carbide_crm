@@ -5,6 +5,11 @@ import type { ContactCreatePayload, ContactUpdatePayload } from '@/types/api';
 
 import { contactService } from '../services/contactService';
 
+interface MutationCallbacks {
+  onSuccess?: () => void;
+  onError?: (error: Error) => void;
+}
+
 export function useContactMutations() {
   const queryClient = useQueryClient();
 
@@ -63,10 +68,44 @@ export function useContactMutations() {
     },
   });
 
+  // Wrapper functions that use callback pattern instead of promise-based
+  const create = (payload: ContactCreatePayload, callbacks?: MutationCallbacks) => {
+    createMutation.mutate(payload, {
+      onSuccess: () => {
+        callbacks?.onSuccess?.();
+      },
+      onError: (error) => {
+        callbacks?.onError?.(error);
+      },
+    });
+  };
+
+  const update = (payload: ContactUpdatePayload, callbacks?: MutationCallbacks) => {
+    updateMutation.mutate(payload, {
+      onSuccess: () => {
+        callbacks?.onSuccess?.();
+      },
+      onError: (error) => {
+        callbacks?.onError?.(error);
+      },
+    });
+  };
+
+  const remove = (id: string, callbacks?: MutationCallbacks) => {
+    deleteMutation.mutate(id, {
+      onSuccess: () => {
+        callbacks?.onSuccess?.();
+      },
+      onError: (error) => {
+        callbacks?.onError?.(error);
+      },
+    });
+  };
+
   return {
-    create: createMutation.mutateAsync,
-    update: updateMutation.mutateAsync,
-    delete: deleteMutation.mutateAsync,
+    create,
+    update,
+    delete: remove,
     isCreating: createMutation.isPending,
     isUpdating: updateMutation.isPending,
     isDeleting: deleteMutation.isPending,

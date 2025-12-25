@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -65,6 +66,9 @@ export function CreateRelationshipDialog({
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Create Business Relationship</DialogTitle>
+          <DialogDescription>
+            Create a business relationship between a contact and an organization.
+          </DialogDescription>
         </DialogHeader>
         <RelationshipForm
           defaultValues={{

@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -38,6 +39,9 @@ export default function OrganizationsPage() {
           <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>Create New Organization</DialogTitle>
+              <DialogDescription>
+                Add a new organization to your CRM. Fill in the details below.
+              </DialogDescription>
             </DialogHeader>
             <OrganizationForm
               onSuccess={() => {

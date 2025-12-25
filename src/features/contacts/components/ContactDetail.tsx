@@ -1,4 +1,4 @@
-import { Mail, Phone, MapPin, Briefcase, Calendar, Building2 } from 'lucide-react';
+import { Mail, Phone } from 'lucide-react';
 import { Plus } from 'lucide-react';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -17,8 +17,8 @@ import { PrimaryRelationshipGroup } from '@/features/relationships/components/Pr
 import { SecondaryRelationshipsList } from '@/features/relationships/components/SecondaryRelationshipsList';
 import { usePrimaryGroups } from '@/features/relationships/hooks/useInterpersonalRelationships';
 
-
 import { useContact, useContactActivities } from '../hooks';
+import { CustomAttributesCard } from './CustomAttributesCard';
 
 interface ContactDetailProps {
   contactId: string;
@@ -196,6 +196,10 @@ export function ContactDetail({ contactId }: ContactDetailProps) {
             <SecondaryRelationshipsList contactId={contact.id} />
           </CardContent>
         </Card>
+
+        {contact.custom_attributes && Object.keys(contact.custom_attributes).length > 0 && (
+          <CustomAttributesCard customAttributes={contact.custom_attributes} />
+        )}
 
         <Card>
           <CardHeader>

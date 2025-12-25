@@ -1,11 +1,15 @@
-import { Building2, Globe, MapPin, Calendar } from 'lucide-react';
+import { Building2, Globe, MapPin, Link2 } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
 
 import { useOrganization } from '../hooks';
+import { LinkContactDialog } from './LinkContactDialog';
+import { OrgCustomAttributesCard } from './OrgCustomAttributesCard';
+import { OrganizationContactList } from './OrganizationContactList';
 
 interface OrganizationDetailProps {
   organizationId: string;
@@ -79,9 +83,10 @@ export function OrganizationDetail({ organizationId }: OrganizationDetailProps) 
                   <div key={idx} className="mt-1 flex items-start gap-2 text-sm">
                     <MapPin className="h-4 w-4 shrink-0 text-muted-foreground" />
                     <div>
-                      {addr.street && <p>{addr.street}</p>}
+                      {addr.street1 && <p>{addr.street1}</p>}
+                      {addr.street2 && <p>{addr.street2}</p>}
                       <p>
-                        {[addr.city, addr.state, addr.zip]
+                        {[addr.city, addr.state, addr.postal_code]
                           .filter(Boolean)
                           .join(', ')}
                       </p>
@@ -117,7 +122,18 @@ export function OrganizationDetail({ organizationId }: OrganizationDetailProps) 
       <div className="lg:col-span-1">
         <Card>
           <CardHeader>
-            <CardTitle>Contacts</CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle>Contacts</CardTitle>
+              <LinkContactDialog
+                organizationId={organization.id}
+                trigger={
+                  <Button variant="outline" size="sm">
+                    <Link2 className="mr-2 h-4 w-4" />
+                    Link Contact
+                  </Button>
+                }
+              />
+            </div>
           </CardHeader>
           <CardContent>
             <OrganizationContactList organizationId={organization.id} />
@@ -126,7 +142,11 @@ export function OrganizationDetail({ organizationId }: OrganizationDetailProps) 
       </div>
 
       {/* Right Sidebar - Details */}
-      <div className="lg:col-span-1">
+      <div className="lg:col-span-1 space-y-4">
+        {organization.custom_attributes && Object.keys(organization.custom_attributes).length > 0 && (
+          <OrgCustomAttributesCard customAttributes={organization.custom_attributes} />
+        )}
+
         <Card>
           <CardHeader>
             <CardTitle>Details</CardTitle>

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -32,6 +33,9 @@ export default function CadencesPage() {
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Create New Cadence</DialogTitle>
+              <DialogDescription>
+                Build a new cadence template to automate your outreach workflow.
+              </DialogDescription>
             </DialogHeader>
             <CadenceBuilder
               onSuccess={() => {

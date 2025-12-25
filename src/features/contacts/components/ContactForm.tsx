@@ -5,10 +5,12 @@ import { ValidatedInput } from '@/components/forms/ValidatedInput';
 import { ValidatedTextarea } from '@/components/forms/ValidatedTextarea';
 import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
+import { Separator } from '@/components/ui/separator';
 import { contactFormSchema, type ContactFormValues } from '@/lib/validators/contact';
 import type { Contact } from '@/types/database';
 
 import { useContactMutations } from '../hooks/useContactMutations';
+import { CustomAttributesForm } from './CustomAttributesForm';
 
 
 interface ContactFormProps {
@@ -33,6 +35,7 @@ export function ContactForm({ contact, onSuccess, onCancel }: ContactFormProps) 
           description: contact.description || '',
           tags: contact.tags || [],
           avatar_url: contact.avatar_url || '',
+          custom_attributes: contact.custom_attributes || {},
         }
       : {
           first_name: '',
@@ -44,19 +47,21 @@ export function ContactForm({ contact, onSuccess, onCancel }: ContactFormProps) 
           description: '',
           tags: [],
           avatar_url: '',
+          custom_attributes: {},
         },
   });
 
-  const onSubmit = async (values: ContactFormValues) => {
-    try {
-      if (contact) {
-        await update({ id: contact.id, ...values });
-      } else {
-        await create(values);
-      }
-      onSuccess?.();
-    } catch (error) {
-      console.error('Error saving contact:', error);
+  const onSubmit = (values: ContactFormValues) => {
+    const callbacks = {
+      onSuccess: () => {
+        onSuccess?.();
+      },
+    };
+
+    if (contact) {
+      update({ id: contact.id, ...values }, callbacks);
+    } else {
+      create(values, callbacks);
     }
   };
 
@@ -78,7 +83,14 @@ export function ContactForm({ contact, onSuccess, onCancel }: ContactFormProps) 
 
         <ValidatedInput name="avatar_url" label="Avatar URL" type="url" />
 
-        <div className="flex justify-end gap-2">
+        <Separator className="my-6" />
+        
+        <div>
+          <h3 className="text-sm font-medium mb-4">Additional Information</h3>
+          <CustomAttributesForm />
+        </div>
+
+        <div className="flex justify-end gap-2 pt-4">
           {onCancel && (
             <Button type="button" variant="outline" onClick={onCancel}>
               Cancel

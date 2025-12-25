@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -35,9 +36,12 @@ export default function ContactsPage() {
               Add Contact
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Create New Contact</DialogTitle>
+              <DialogDescription>
+                Add a new contact to your CRM. Fill in the basic information below.
+              </DialogDescription>
             </DialogHeader>
             <ContactForm
               onSuccess={() => {

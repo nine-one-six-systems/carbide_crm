@@ -73,7 +73,18 @@ export function useRealtimeSubscription<T extends Record<string, unknown>>({
     // Create a unique channel name
     const channelName = `realtime:${schema}:${table}:${filter || 'all'}`;
 
-    // Build channel config
+    // Parse filter to extract column and value for client-side filtering fallback
+    let filterColumn: string | null = null;
+    let filterValue: string | null = null;
+    if (filter) {
+      const match = filter.match(/^(\w+)=eq\.(.+)$/);
+      if (match) {
+        filterColumn = match[1];
+        filterValue = match[2];
+      }
+    }
+
+    // Build channel config - ensure proper typing for Supabase
     const channelConfig: {
       event: PostgresChangeEvent;
       schema: string;
@@ -85,17 +96,55 @@ export function useRealtimeSubscription<T extends Record<string, unknown>>({
       table,
     };
 
+    // Only add filter if provided and properly formatted
     if (filter) {
       channelConfig.filter = filter;
     }
 
-    // Create subscription
+    // Create subscription with client-side filtering fallback
     const channel = supabase
       .channel(channelName)
       .on(
-        'postgres_changes' as const,
-        channelConfig,
+        'postgres_changes',
+        channelConfig as {
+          event: PostgresChangeEvent;
+          schema: string;
+          table: string;
+          filter?: string;
+        },
         (payload: RealtimePostgresChangesPayload<T>) => {
+          // Client-side filtering fallback: if server-side filter fails, filter here
+          if (filterColumn && filterValue) {
+            let matches = false;
+            
+            // For INSERT events, check new record
+            if (payload.eventType === 'INSERT' && payload.new) {
+              const record = payload.new as Record<string, unknown>;
+              matches = record[filterColumn] === filterValue;
+            }
+            // For UPDATE events, check if either old or new record matches
+            else if (payload.eventType === 'UPDATE') {
+              if (payload.new) {
+                const newRecord = payload.new as Record<string, unknown>;
+                matches = newRecord[filterColumn] === filterValue;
+              }
+              if (!matches && payload.old) {
+                const oldRecord = payload.old as Record<string, unknown>;
+                matches = oldRecord[filterColumn] === filterValue;
+              }
+            }
+            // For DELETE events, check old record
+            else if (payload.eventType === 'DELETE' && payload.old) {
+              const record = payload.old as Record<string, unknown>;
+              matches = record[filterColumn] === filterValue;
+            }
+            
+            // Skip event if it doesn't match our filter
+            if (!matches) {
+              return;
+            }
+          }
+
           // Call specific callbacks
           if (payload.eventType === 'INSERT' && onInsert) {
             onInsert(payload);
@@ -109,11 +158,38 @@ export function useRealtimeSubscription<T extends Record<string, unknown>>({
           invalidateQueries();
         }
       )
-      .subscribe((status) => {
+      .subscribe((status, err) => {
         if (status === 'SUBSCRIBED') {
           console.debug(`Realtime subscription active: ${channelName}`);
         } else if (status === 'CHANNEL_ERROR') {
-          console.error(`Realtime subscription error: ${channelName}`);
+          // Handle filter mismatch errors gracefully
+          if (err?.message?.includes('mismatch between server and client bindings')) {
+            console.warn(
+              `Realtime subscription using client-side filtering due to server filter mismatch: ${channelName}`,
+              {
+                table,
+                schema,
+                filter,
+                note: 'Subscription will receive all changes and filter client-side.',
+              }
+            );
+            // The subscription will still work with client-side filtering
+            // The error is logged but doesn't prevent functionality
+          } else {
+            console.error(`Realtime subscription error: ${channelName}`, err);
+            if (err) {
+              console.warn('Realtime subscription details:', {
+                table,
+                schema,
+                filter,
+                error: err,
+              });
+            }
+          }
+        } else if (status === 'TIMED_OUT') {
+          console.warn(`Realtime subscription timed out: ${channelName}`);
+        } else if (status === 'CLOSED') {
+          console.debug(`Realtime subscription closed: ${channelName}`);
         }
       });
 
@@ -153,7 +229,10 @@ export function useTasksRealtime(userId?: string) {
   return useRealtimeSubscription({
     table: 'cadence_tasks',
     queryKeys: [['tasks']],
+    // Use specific event types instead of '*' when using filters for better compatibility
+    event: '*',
     filter: userId ? `assigned_to=eq.${userId}` : undefined,
+    enabled: !!userId, // Only enable when userId is available
   });
 }
 

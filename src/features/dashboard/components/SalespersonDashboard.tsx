@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -144,6 +145,9 @@ export function SalespersonDashboard() {
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>Create Task</DialogTitle>
+                  <DialogDescription>
+                    Create a new task to track your work.
+                  </DialogDescription>
                 </DialogHeader>
                 <TaskForm />
               </DialogContent>

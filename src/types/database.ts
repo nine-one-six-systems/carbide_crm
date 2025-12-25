@@ -110,12 +110,114 @@ export interface PhoneEntry {
 }
 
 export interface AddressEntry {
-  street?: string;
+  street1?: string;
+  street2?: string;
   city?: string;
   state?: string;
-  zip?: string;
+  postal_code?: string;
   country?: string;
   label?: string;
+}
+
+// =============================================================================
+// CUSTOM ATTRIBUTES TYPES
+// =============================================================================
+
+export type CustomFieldType = 'text' | 'number' | 'date' | 'boolean' | 'select' | 'multiselect' | 'url' | 'email';
+
+export type CustomFieldEntity = 'contact' | 'organization' | 'both';
+
+export interface PersonalAttributes {
+  favorite_food?: string;
+  favorite_drink?: string;
+  coffee_order?: string;
+  favorite_restaurant?: string;
+  hobbies?: string;
+  leisure_activities?: string;
+  goals?: string;
+  birthday?: string; // ISO 8601 date
+  anniversary?: string; // ISO 8601 date
+  marital_status?: string;
+  dependents?: string;
+}
+
+export interface SocialAttributes {
+  linkedin?: string;
+  twitter?: string;
+  facebook?: string;
+  instagram?: string;
+  skype?: string;
+  website?: string;
+}
+
+export interface PreferenceAttributes {
+  email_opt_out?: boolean;
+  sms_opt_out?: boolean;
+  email_opt_out_reason?: string;
+}
+
+export interface GeoAttributes {
+  lat?: number;
+  lng?: number;
+  created_lat?: number;
+  created_lng?: number;
+  created_address?: string;
+}
+
+export interface LegacyAttributes {
+  description_916?: string;
+  consent?: string;
+  nps?: {
+    score?: number;
+    comment?: string;
+    completed_at?: string;
+  };
+  salesmate_score?: number;
+  pharmacy_status?: string;
+}
+
+export interface OperationsAttributes {
+  vehicles?: number;
+  location_count?: number;
+  timezone?: string;
+}
+
+export interface IdentifierAttributes {
+  site_code?: string;
+}
+
+export interface OrgContactAttributes {
+  admin_poc?: string;
+  onsite_poc?: string;
+}
+
+export interface CustomAttributes {
+  personal?: PersonalAttributes;
+  social?: SocialAttributes;
+  preferences?: PreferenceAttributes;
+  geo?: GeoAttributes;
+  legacy?: LegacyAttributes;
+  operations?: OperationsAttributes;
+  identifiers?: IdentifierAttributes;
+  contacts?: OrgContactAttributes;
+  [key: string]: Record<string, unknown> | undefined;
+}
+
+export interface CustomFieldDefinition {
+  id: string;
+  key: string;
+  label: string;
+  field_type: CustomFieldType;
+  category: string;
+  entity_type: CustomFieldEntity;
+  options: string[];
+  is_required: boolean;
+  show_on_card: boolean;
+  display_order: number;
+  is_active: boolean;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 // =============================================================================
@@ -144,6 +246,7 @@ export interface Contact {
   description: string | null;
   tags: string[];
   avatar_url: string | null;
+  custom_attributes: CustomAttributes;
   created_by: string;
   created_at: string;
   updated_at: string;
@@ -159,6 +262,7 @@ export interface Organization {
   description: string | null;
   tags: string[];
   logo_url: string | null;
+  custom_attributes: CustomAttributes;
   created_by: string;
   created_at: string;
   updated_at: string;

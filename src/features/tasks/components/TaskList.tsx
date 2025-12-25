@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
@@ -140,6 +141,9 @@ export function TaskList({ searchParams = {}, showActions = true }: TaskListProp
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Complete Task</DialogTitle>
+            <DialogDescription>
+              Add notes about completing this task (optional).
+            </DialogDescription>
           </DialogHeader>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(handleComplete)} className="space-y-4">

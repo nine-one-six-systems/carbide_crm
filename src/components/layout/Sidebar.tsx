@@ -6,6 +6,7 @@ import {
   CheckSquare,
   ListChecks,
   Calendar,
+  BarChart3,
   Settings,
   Menu,
   X,
@@ -33,6 +34,7 @@ const navItems: NavItem[] = [
   { title: 'Tasks', href: '/tasks', icon: CheckSquare },
   { title: 'Batch Tasks', href: '/batch-tasks', icon: ListChecks },
   { title: 'Cadences', href: '/cadences', icon: Calendar },
+  { title: 'Leadership', href: '/leadership', icon: BarChart3 },
   { title: 'Settings', href: '/settings', icon: Settings },
 ];
 

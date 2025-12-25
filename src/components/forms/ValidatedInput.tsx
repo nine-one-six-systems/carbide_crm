@@ -38,6 +38,7 @@ export const ValidatedInput = forwardRef<HTMLInputElement, ValidatedInputProps>(
                 {...props}
                 ref={ref}
                 className={cn(className)}
+                value={field.value ?? ''}
                 onBlur={(e) => {
                   field.onBlur();
                   if (validateOnBlur) {
