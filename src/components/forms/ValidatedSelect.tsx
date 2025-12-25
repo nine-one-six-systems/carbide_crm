@@ -44,18 +44,26 @@ export function ValidatedSelect({
     <FormField
       control={form.control}
       name={name}
-      render={({ field }) => (
-        <FormItem>
-          {label && <FormLabel>{label}</FormLabel>}
-          <Select
-            onValueChange={field.onChange}
-            defaultValue={field.value}
-            onOpenChange={(open) => {
-              if (!open && validateOnBlur) {
+      render={({ field }) => {
+        // Ensure value is always a string or undefined (never empty string for Radix Select)
+        const selectValue = field.value === '' || field.value === null ? undefined : field.value;
+        
+        return (
+          <FormItem>
+            {label && <FormLabel>{label}</FormLabel>}
+            <Select
+              onValueChange={(value) => {
+                field.onChange(value);
+                // Trigger validation immediately when value changes
                 form.trigger(name);
-              }
-            }}
-          >
+              }}
+              value={selectValue}
+              onOpenChange={(open) => {
+                if (!open && validateOnBlur) {
+                  form.trigger(name);
+                }
+              }}
+            >
             <FormControl>
               <SelectTrigger>
                 <SelectValue placeholder={placeholder} />
@@ -72,7 +80,8 @@ export function ValidatedSelect({
           {description && <FormDescription>{description}</FormDescription>}
           <FormMessage />
         </FormItem>
-      )}
+        );
+      }}
     />
   );
 }

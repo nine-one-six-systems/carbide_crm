@@ -342,4 +342,27 @@ export const cadenceService = {
 
     return (data || []) as CadenceTask[];
   },
+
+  /**
+   * Get contacts with active cadences
+   */
+  async getContactsWithActiveCadences(): Promise<string[]> {
+    const { data, error } = await restClient.query<{ contact_id: string }>(
+      'applied_cadences',
+      {
+        select: 'contact_id',
+        filters: [
+          { column: 'status', operator: 'in', value: ['active', 'paused'] },
+        ],
+      }
+    );
+
+    if (error) {
+      console.error('Error fetching contacts with active cadences:', error);
+      throw error;
+    }
+
+    // Return unique contact IDs
+    return Array.from(new Set((data || []).map((c) => c.contact_id)));
+  },
 };

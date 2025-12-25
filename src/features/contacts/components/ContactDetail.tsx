@@ -4,7 +4,6 @@ import { ActivityFeed } from '@/features/activities/components/ActivityFeed';
 import { useContactNavigation } from '@/hooks/useContactNavigation';
 
 import { useContact, useContactActivities } from '../hooks';
-import { ContactHeader } from './ContactHeader';
 import { ContactInfoSidebar } from './ContactInfoSidebar';
 import { ContactRightSidebar } from './ContactRightSidebar';
 
@@ -20,11 +19,8 @@ export function ContactDetail({ contactId }: ContactDetailProps) {
   if (isLoading) {
     return (
       <div className="h-screen flex flex-col bg-gray-50">
-        <div className="sticky top-0 z-10 border-b bg-white px-6 py-4">
-          <Skeleton className="h-12 w-64" />
-        </div>
         <div className="flex-1 flex overflow-hidden">
-          <aside className="w-72 border-r bg-white">
+          <aside className="w-80 border-r bg-white">
             <div className="p-4 space-y-4">
               <Skeleton className="h-32" />
               <Skeleton className="h-64" />
@@ -33,7 +29,7 @@ export function ContactDetail({ contactId }: ContactDetailProps) {
           <main className="flex-1 flex flex-col overflow-hidden bg-gray-50">
             <Skeleton className="h-full" />
           </main>
-          <aside className="w-80 border-l bg-white">
+          <aside className="w-72 border-l bg-white">
             <div className="p-4 space-y-4">
               <Skeleton className="h-32" />
               <Skeleton className="h-32" />
@@ -57,19 +53,16 @@ export function ContactDetail({ contactId }: ContactDetailProps) {
 
   return (
     <div className="h-screen flex flex-col bg-gray-50">
-      {/* Sticky Header */}
-      <ContactHeader
-        contact={contact}
-        contactIndex={currentIndex}
-        totalContacts={totalContacts}
-        lastActivityTime={lastActivity}
-      />
-
       {/* Three Column Layout */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Left Sidebar - Fixed width 288px (w-72) */}
-        <aside className="w-72 border-r bg-white flex-shrink-0">
-          <ContactInfoSidebar contact={contact} />
+        {/* Left Sidebar - Fixed width 320px (w-80) */}
+        <aside className="w-80 border-r bg-white flex-shrink-0">
+          <ContactInfoSidebar 
+            contact={contact}
+            contactIndex={currentIndex}
+            totalContacts={totalContacts}
+            lastActivityTime={lastActivity}
+          />
         </aside>
 
         {/* Center - Flexible width */}
@@ -86,8 +79,8 @@ export function ContactDetail({ contactId }: ContactDetailProps) {
           )}
         </main>
 
-        {/* Right Sidebar - Fixed width 320px (w-80) */}
-        <aside className="w-80 border-l bg-white flex-shrink-0">
+        {/* Right Sidebar - Fixed width 288px (w-72) */}
+        <aside className="w-72 border-l bg-white flex-shrink-0">
           <ContactRightSidebar contact={contact} />
         </aside>
       </div>

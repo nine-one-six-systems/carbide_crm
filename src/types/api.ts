@@ -42,6 +42,8 @@ export interface ContactSearchParams extends SearchParams {
   createdBy?: string;
   hasOrganization?: boolean;
   customAttributeFilters?: CustomAttributeFilter[];
+  hasPendingCadenceTasks?: boolean;
+  hasActiveCadences?: boolean;
 }
 
 export interface ContactCreatePayload {

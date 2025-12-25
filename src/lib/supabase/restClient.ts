@@ -6,6 +6,8 @@
  * Direct fetch calls to the REST API work reliably.
  */
 
+import { supabase } from './client';
+
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
@@ -69,10 +71,41 @@ export interface RpcOptions {
 // ============================================================================
 
 /**
- * Get access token from localStorage
- * Supabase stores sessions with keys like 'sb-<project-ref>-auth-token'
+ * Get access token from Supabase client session
+ * This ensures we always get the current valid token
  */
-export function getAccessToken(): string | null {
+export async function getAccessToken(): Promise<string | null> {
+  if (typeof window === 'undefined') return null;
+
+  try {
+    // Get session from Supabase client - this is the most reliable way
+    const { data: { session } } = await supabase.auth.getSession();
+    return session?.access_token || null;
+  } catch {
+    // Fallback to localStorage parsing if getSession fails
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('sb-') && key.includes('-auth-token')) {
+          const value = localStorage.getItem(key);
+          if (value) {
+            const data = JSON.parse(value);
+            return data.access_token || null;
+          }
+        }
+      }
+    } catch {
+      // Ignore errors
+    }
+  }
+  return null;
+}
+
+/**
+ * Synchronous version that reads from localStorage
+ * Use this only when you can't await (e.g., in non-async contexts)
+ */
+export function getAccessTokenSync(): string | null {
   if (typeof window === 'undefined') return null;
 
   try {
@@ -134,6 +167,11 @@ function getHeaders(accessToken: string | null, prefer?: string): HeadersInit {
   }
 
   return headers;
+}
+
+async function getHeadersAsync(prefer?: string): Promise<HeadersInit> {
+  const accessToken = await getAccessToken();
+  return getHeaders(accessToken, prefer);
 }
 
 function buildFilterParam(filter: RestFilter): string {
@@ -233,7 +271,6 @@ export async function query<T>(
   table: string,
   options: RestQueryOptions = {}
 ): Promise<RestResponse<T[]>> {
-  const accessToken = getAccessToken();
   const params = new URLSearchParams();
 
   // Select columns
@@ -278,7 +315,7 @@ export async function query<T>(
   const url = `${supabaseUrl}/rest/v1/${table}?${params.toString()}`;
   const response = await fetch(url, {
     method: 'GET',
-    headers: getHeaders(accessToken, prefer),
+    headers: await getHeadersAsync(prefer),
   });
 
   return handleResponse<T[]>(response);
@@ -291,7 +328,6 @@ export async function querySingle<T>(
   table: string,
   options: RestQueryOptions = {}
 ): Promise<RestResponse<T>> {
-  const accessToken = getAccessToken();
   const params = new URLSearchParams();
 
   params.set('select', options.select || '*');
@@ -309,7 +345,7 @@ export async function querySingle<T>(
   const url = `${supabaseUrl}/rest/v1/${table}?${params.toString()}`;
   const response = await fetch(url, {
     method: 'GET',
-    headers: getHeaders(accessToken, 'return=representation'),
+    headers: await getHeadersAsync('return=representation'),
   });
 
   const result = await handleResponse<T[]>(response);
@@ -336,7 +372,6 @@ export async function insert<T>(
   data: Record<string, unknown> | Record<string, unknown>[],
   options: { select?: string; returning?: boolean } = {}
 ): Promise<RestResponse<T>> {
-  const accessToken = getAccessToken();
 
   const preferParts: string[] = [];
   if (options.returning !== false) {
@@ -351,7 +386,7 @@ export async function insert<T>(
   const url = `${supabaseUrl}/rest/v1/${table}${params.toString() ? `?${params.toString()}` : ''}`;
   const response = await fetch(url, {
     method: 'POST',
-    headers: getHeaders(accessToken, preferParts.join(',')),
+    headers: await getHeadersAsync(preferParts.join(',')),
     body: JSON.stringify(data),
   });
 
@@ -375,7 +410,6 @@ export async function update<T>(
   filters: RestFilter[],
   options: { select?: string; returning?: boolean } = {}
 ): Promise<RestResponse<T>> {
-  const accessToken = getAccessToken();
 
   const preferParts: string[] = [];
   if (options.returning !== false) {
@@ -397,7 +431,7 @@ export async function update<T>(
   const url = `${supabaseUrl}/rest/v1/${table}?${params.toString()}`;
   const response = await fetch(url, {
     method: 'PATCH',
-    headers: getHeaders(accessToken, preferParts.join(',')),
+    headers: await getHeadersAsync(preferParts.join(',')),
     body: JSON.stringify(data),
   });
 
@@ -419,7 +453,6 @@ export async function remove(
   filters: RestFilter[],
   options: { returning?: boolean } = {}
 ): Promise<RestResponse<null>> {
-  const accessToken = getAccessToken();
 
   const preferParts: string[] = [];
   if (options.returning) {
@@ -436,7 +469,7 @@ export async function remove(
   const url = `${supabaseUrl}/rest/v1/${table}?${params.toString()}`;
   const response = await fetch(url, {
     method: 'DELETE',
-    headers: getHeaders(accessToken, preferParts.join(',')),
+    headers: await getHeadersAsync(preferParts.length > 0 ? preferParts.join(',') : undefined),
   });
 
   return handleResponse<null>(response);
@@ -449,7 +482,6 @@ export async function rpc<T>(
   functionName: string,
   options: RpcOptions = {}
 ): Promise<RestResponse<T>> {
-  const accessToken = getAccessToken();
 
   const preferParts: string[] = [];
   if (options.count) {
@@ -459,7 +491,7 @@ export async function rpc<T>(
   const url = `${supabaseUrl}/rest/v1/rpc/${functionName}`;
   const response = await fetch(url, {
     method: 'POST',
-    headers: getHeaders(accessToken, preferParts.join(',') || undefined),
+    headers: await getHeadersAsync(preferParts.length > 0 ? preferParts.join(',') : undefined),
     body: JSON.stringify(options.args || {}),
   });
 
@@ -618,6 +650,7 @@ export const restClient = {
   rpc,
   from,
   getAccessToken,
+  getAccessTokenSync,
   getCurrentUserId,
 };
 

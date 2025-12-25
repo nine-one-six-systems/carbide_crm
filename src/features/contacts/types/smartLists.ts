@@ -56,5 +56,27 @@ export const predefinedSmartLists: SmartList[] = [
     },
     isPredefined: true,
   },
+  {
+    id: 'prospecting-tasks',
+    name: 'Prospecting Tasks',
+    icon: 'Target',
+    filters: {
+      page: 1,
+      pageSize: 20,
+      hasPendingCadenceTasks: true,
+    },
+    isPredefined: true,
+  },
+  {
+    id: 'cadence-tasks',
+    name: 'Cadence Tasks',
+    icon: 'Workflow',
+    filters: {
+      page: 1,
+      pageSize: 20,
+      hasActiveCadences: true,
+    },
+    isPredefined: true,
+  },
 ];
 

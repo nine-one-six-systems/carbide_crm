@@ -66,10 +66,11 @@ export function AddSecondaryRelationshipDialog({
   const form = useForm<RelationshipFormValues>({
     resolver: zodResolver(relationshipSchema),
     defaultValues: {
-      related_contact_id: '',
-      relationship_type: '',
+      related_contact_id: undefined,
+      relationship_type: undefined,
       notes: '',
     },
+    mode: 'onChange', // Validate on change to clear errors immediately
   });
 
   const contactOptions = useMemo(() => {
@@ -106,18 +107,32 @@ export function AddSecondaryRelationshipDialog({
   };
 
   const onSubmit = async (values: RelationshipFormValues) => {
+    console.log('Submitting relationship:', values);
     try {
-      await createSecondary({
+      const result = await createSecondary({
         contact_id: contactId,
-        related_contact_id: values.related_contact_id,
+        related_contact_id: values.related_contact_id!,
         relationship_type: values.relationship_type,
         notes: values.notes || undefined,
       });
-      form.reset();
+      console.log('Relationship created successfully:', result);
+      form.reset({
+        related_contact_id: undefined,
+        relationship_type: undefined,
+        notes: '',
+      });
       setNewlyCreatedContact(null);
       setOpen(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating relationship:', error);
+      console.error('Error details:', {
+        message: error?.message,
+        code: error?.code,
+        details: error?.details,
+        hint: error?.hint,
+      });
+      // Re-throw so mutation's onError handler can show toast
+      throw error;
     }
   };
 
@@ -143,7 +158,16 @@ export function AddSecondaryRelationshipDialog({
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form 
+            onSubmit={form.handleSubmit(
+              onSubmit,
+              (errors) => {
+                console.log('Form validation errors:', errors);
+                console.log('Form values:', form.getValues());
+              }
+            )} 
+            className="space-y-4"
+          >
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <label htmlFor="related_contact_id" className="text-sm font-medium">
@@ -197,11 +221,18 @@ export function AddSecondaryRelationshipDialog({
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => setOpen(false)}
+                onClick={() => {
+                  form.reset();
+                  setNewlyCreatedContact(null);
+                  setOpen(false);
+                }}
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={isCreatingSecondary}>
+              <Button 
+                type="submit" 
+                disabled={isCreatingSecondary}
+              >
                 {isCreatingSecondary ? 'Adding...' : 'Add'}
               </Button>
             </div>

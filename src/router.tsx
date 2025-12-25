@@ -12,6 +12,8 @@ const LoginPage = lazy(() => import('@/pages/Login').then((m) => ({ default: m.d
 const DashboardPage = lazy(() => import('@/pages/Dashboard').then((m) => ({ default: m.default })));
 const ContactsPage = lazy(() => import('@/pages/Contacts').then((m) => ({ default: m.default })));
 const ContactDetailPage = lazy(() => import('@/pages/ContactDetail').then((m) => ({ default: m.default })));
+const ProspectingTasksPage = lazy(() => import('@/pages/ProspectingTasks').then((m) => ({ default: m.default })));
+const CadenceTasksPage = lazy(() => import('@/pages/CadenceTasks').then((m) => ({ default: m.default })));
 const OrganizationsPage = lazy(() => import('@/pages/Organizations').then((m) => ({ default: m.default })));
 const OrganizationDetailPage = lazy(() => import('@/pages/OrganizationDetail').then((m) => ({ default: m.default })));
 const PipelinesPage = lazy(() => import('@/pages/Pipelines').then((m) => ({ default: m.default })));
@@ -100,6 +102,30 @@ export function AppRouter() {
             <AppShell>
               <Suspense fallback={<LoadingFallback />}>
                 <ContactDetailPage />
+              </Suspense>
+            </AppShell>
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: '/contacts/prospecting-tasks',
+        element: (
+          <ProtectedRoute>
+            <AppShell>
+              <Suspense fallback={<LoadingFallback />}>
+                <ProspectingTasksPage />
+              </Suspense>
+            </AppShell>
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: '/contacts/cadence-tasks',
+        element: (
+          <ProtectedRoute>
+            <AppShell>
+              <Suspense fallback={<LoadingFallback />}>
+                <CadenceTasksPage />
               </Suspense>
             </AppShell>
           </ProtectedRoute>

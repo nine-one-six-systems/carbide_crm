@@ -1,17 +1,9 @@
 import { useState } from 'react';
 
-import { Plus, RefreshCw, Filter, Users as UsersIcon, ChevronDown, Search } from 'lucide-react';
+import { RefreshCw, Filter, Users as UsersIcon, ChevronDown, Search } from 'lucide-react';
 import { useDebounce } from 'use-debounce';
 
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,24 +11,23 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
-import { ContactForm } from '@/features/contacts/components/ContactForm';
 import { ContactList } from '@/features/contacts/components/ContactList';
 import { ContactsSidebar } from '@/features/contacts/components/ContactsSidebar';
 import type { ContactSearchParams } from '@/types/api';
 
-export default function ContactsPage() {
+export default function CadenceTasksPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery] = useDebounce(searchQuery, 300);
-  const [dialogOpen, setDialogOpen] = useState(false);
   const [filters, setFilters] = useState<ContactSearchParams>({
     page: 1,
     pageSize: 20,
+    hasActiveCadences: true,
   });
-  const [selectedListId, setSelectedListId] = useState<string | undefined>();
 
   const handleApplyFilter = (newFilters: ContactSearchParams) => {
     setFilters({
       ...newFilters,
+      hasActiveCadences: true,
       query: debouncedQuery || undefined,
       page: 1,
       pageSize: 20,
@@ -44,7 +35,6 @@ export default function ContactsPage() {
   };
 
   const handleRefresh = () => {
-    // Trigger a refetch by updating filters slightly
     setFilters((prev) => ({ ...prev }));
   };
 
@@ -52,6 +42,7 @@ export default function ContactsPage() {
     (key) =>
       key !== 'page' &&
       key !== 'pageSize' &&
+      key !== 'hasActiveCadences' &&
       filters[key as keyof ContactSearchParams] !== undefined
   ).length;
 
@@ -61,7 +52,7 @@ export default function ContactsPage() {
       <ContactsSidebar
         currentFilters={filters}
         onApplyFilter={handleApplyFilter}
-        selectedListId={selectedListId}
+        selectedListId="cadence-tasks"
       />
 
       {/* Main Content */}
@@ -70,9 +61,9 @@ export default function ContactsPage() {
         <div className="border-b bg-white p-4">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h1 className="text-2xl font-semibold">All People</h1>
+              <h1 className="text-2xl font-semibold">Cadence Tasks</h1>
               <p className="text-sm text-muted-foreground mt-1">
-                Showing {filters.pageSize || 20} people
+                Contacts with active cadences
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -80,28 +71,6 @@ export default function ContactsPage() {
                 <RefreshCw className="h-4 w-4 mr-2" />
                 Update List
               </Button>
-              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button size="sm">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Contact
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                  <DialogHeader>
-                    <DialogTitle>Create New Contact</DialogTitle>
-                    <DialogDescription>
-                      Add a new contact to your CRM. Fill in the basic information below.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <ContactForm
-                    onSuccess={() => {
-                      setDialogOpen(false);
-                    }}
-                    onCancel={() => setDialogOpen(false)}
-                  />
-                </DialogContent>
-              </Dialog>
             </div>
           </div>
 
@@ -117,22 +86,6 @@ export default function ContactsPage() {
                 className="pl-9"
               />
             </div>
-
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm">
-                  Columns
-                  <ChevronDown className="h-4 w-4 ml-2" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem>Name</DropdownMenuItem>
-                <DropdownMenuItem>Phone</DropdownMenuItem>
-                <DropdownMenuItem>Email</DropdownMenuItem>
-                <DropdownMenuItem>Last Activity</DropdownMenuItem>
-                <DropdownMenuItem>Created</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -169,3 +122,4 @@ export default function ContactsPage() {
     </div>
   );
 }
+

@@ -128,6 +128,30 @@ export function useInterpersonalMutations() {
     },
   });
 
+  const updateSecondaryMutation = useMutation({
+    mutationFn: ({ id, ...payload }: { id: string; relationship_type?: string; notes?: string }) =>
+      interpersonalService.updateSecondaryRelationship(id, payload),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({
+        queryKey: ['secondary-relationships', data.contact_id],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['secondary-relationships', data.related_contact_id],
+      });
+      toast({
+        title: 'Success',
+        description: 'Relationship updated',
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to update relationship',
+        variant: 'destructive',
+      });
+    },
+  });
+
   const deleteSecondaryMutation = useMutation({
     mutationFn: (id: string) => interpersonalService.deleteSecondaryRelationship(id),
     onSuccess: () => {
@@ -151,11 +175,13 @@ export function useInterpersonalMutations() {
     addToGroup: addToGroupMutation.mutateAsync,
     removeFromGroup: removeFromGroupMutation.mutateAsync,
     createSecondary: createSecondaryMutation.mutateAsync,
+    updateSecondary: updateSecondaryMutation.mutateAsync,
     deleteSecondary: deleteSecondaryMutation.mutateAsync,
     isCreatingGroup: createGroupMutation.isPending,
     isAddingToGroup: addToGroupMutation.isPending,
     isRemovingFromGroup: removeFromGroupMutation.isPending,
     isCreatingSecondary: createSecondaryMutation.isPending,
+    isUpdatingSecondary: updateSecondaryMutation.isPending,
     isDeletingSecondary: deleteSecondaryMutation.isPending,
   };
 }

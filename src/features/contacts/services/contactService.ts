@@ -231,4 +231,137 @@ export const contactService = {
 
     return (data || []) as Activity[];
   },
+
+  /**
+   * Search contacts with task/cadence filtering
+   */
+  async searchWithTasks(
+    params: ContactSearchParams & {
+      hasPendingCadenceTasks?: boolean;
+      hasActiveCadences?: boolean;
+    }
+  ): Promise<PaginatedResponse<Contact>> {
+    const {
+      hasPendingCadenceTasks,
+      hasActiveCadences,
+      ...searchParams
+    } = params;
+
+    // If no task/cadence filters, use regular search
+    if (!hasPendingCadenceTasks && !hasActiveCadences) {
+      return this.search(searchParams);
+    }
+
+    // Get contact IDs that match task/cadence criteria
+    let contactIds: string[] = [];
+
+    if (hasPendingCadenceTasks) {
+      const { data: tasks, error: tasksError } = await restClient.query<{ contact_id: string }>(
+        'cadence_tasks',
+        {
+          select: 'contact_id',
+          filters: [{ column: 'status', operator: 'eq', value: 'pending' }],
+        }
+      );
+
+      if (tasksError) {
+        console.error('Error fetching contacts with pending tasks:', tasksError);
+        throw tasksError;
+      }
+
+      const taskContactIds = new Set((tasks || []).map((t) => t.contact_id));
+      contactIds = Array.from(taskContactIds);
+    }
+
+    if (hasActiveCadences) {
+      const { data: cadences, error: cadencesError } = await restClient.query<{ contact_id: string }>(
+        'applied_cadences',
+        {
+          select: 'contact_id',
+          filters: [
+            { column: 'status', operator: 'in', value: ['active', 'paused'] },
+          ],
+        }
+      );
+
+      if (cadencesError) {
+        console.error('Error fetching contacts with active cadences:', cadencesError);
+        throw cadencesError;
+      }
+
+      const cadenceContactIds = new Set((cadences || []).map((c) => c.contact_id));
+      
+      if (hasPendingCadenceTasks) {
+        // Intersect both sets
+        contactIds = contactIds.filter((id) => cadenceContactIds.has(id));
+      } else {
+        contactIds = Array.from(cadenceContactIds);
+      }
+    }
+
+    if (contactIds.length === 0) {
+      return {
+        data: [],
+        count: 0,
+        page: searchParams.page || 1,
+        pageSize: searchParams.pageSize || 20,
+        totalPages: 0,
+      };
+    }
+
+    // Now search contacts with the filtered IDs
+    const {
+      query,
+      page = 1,
+      pageSize = 20,
+      sortBy = 'updated_at',
+      sortOrder = 'desc',
+      tags,
+      createdBy,
+    } = searchParams;
+
+    const filters: Array<{ column: string; operator: 'eq' | 'cs' | 'fts' | 'in'; value: unknown }> = [];
+
+    // Filter by contact IDs
+    filters.push({ column: 'id', operator: 'in', value: contactIds });
+
+    // Full-text search
+    if (query) {
+      filters.push({ column: 'search_vector', operator: 'fts', value: query });
+    }
+
+    // Filter by tags
+    if (tags && tags.length > 0) {
+      filters.push({ column: 'tags', operator: 'cs', value: tags });
+    }
+
+    // Filter by creator
+    if (createdBy) {
+      filters.push({ column: 'created_by', operator: 'eq', value: createdBy });
+    }
+
+    // Pagination
+    const from = (page - 1) * pageSize;
+    const to = from + pageSize - 1;
+
+    const { data, error, count } = await restClient.query<Contact>('contacts', {
+      filters,
+      order: { column: sortBy, ascending: sortOrder === 'asc' },
+      range: { from, to },
+      count: 'exact',
+    });
+
+    if (error) {
+      console.error('Error searching contacts with tasks:', error);
+      throw error;
+    }
+
+    return {
+      data: (data || []) as Contact[],
+      count: count || 0,
+      page,
+      pageSize,
+      totalPages: Math.ceil((count || 0) / pageSize),
+    };
+  },
 };

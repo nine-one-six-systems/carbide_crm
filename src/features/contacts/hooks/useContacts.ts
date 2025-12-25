@@ -11,7 +11,13 @@ export function useContacts(params: ContactSearchParams) {
   
   const queryResult = useQuery<PaginatedResponse<Contact>>({
     queryKey: ['contacts', params],
-    queryFn: () => contactService.search(params),
+    queryFn: () => {
+      // Use searchWithTasks if task/cadence filters are present
+      if (params.hasPendingCadenceTasks || params.hasActiveCadences) {
+        return contactService.searchWithTasks(params);
+      }
+      return contactService.search(params);
+    },
     enabled: initialized && !!user,
     staleTime: 1000 * 60 * 2, // 2 minutes
   });

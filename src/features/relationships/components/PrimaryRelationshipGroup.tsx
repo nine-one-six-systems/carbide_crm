@@ -31,12 +31,12 @@ export function PrimaryRelationshipGroup({
   const otherMembers = members?.filter((m) => m.contact_id !== contactId) || [];
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Users className="h-4 w-4 text-muted-foreground" />
-            <CardTitle className="text-base">
+    <Card className="border shadow-sm">
+      <CardHeader className="p-3 pb-2">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <Users className="h-4 w-4 text-muted-foreground shrink-0" />
+            <CardTitle className="text-sm font-medium truncate">
               {group.name || 'Household'}
             </CardTitle>
           </div>
@@ -44,16 +44,17 @@ export function PrimaryRelationshipGroup({
             <Button
               variant="ghost"
               size="icon"
+              className="h-7 w-7 shrink-0"
               onClick={() => onRemove(group.id)}
               aria-label="Remove from group"
             >
-              <X className="h-4 w-4" />
+              <X className="h-3.5 w-3.5" />
             </Button>
           )}
         </div>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-2">
+      <CardContent className="p-3 pt-0">
+        <div className="space-y-1.5">
           {otherMembers.map((member) => {
             const contact = (member as any).contact;
             if (!contact) return null;
@@ -65,20 +66,20 @@ export function PrimaryRelationshipGroup({
               <Link
                 key={member.id}
                 to={`/contacts/${contact.id}`}
-                className="flex items-center gap-2 rounded-lg border p-2 hover:bg-muted transition-colors"
+                className="flex items-center gap-2 rounded-lg border p-1.5 hover:bg-muted transition-colors"
               >
-                <Avatar className="h-8 w-8">
+                <Avatar className="h-7 w-7 shrink-0">
                   <AvatarImage src={contact.avatar_url || undefined} />
                   <AvatarFallback className="text-xs">{initials}</AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate">{fullName}</p>
-                  <div className="flex items-center gap-1 mt-1">
-                    <Badge variant="secondary" className="text-xs">
+                  <div className="flex items-center gap-1 mt-0.5 flex-wrap">
+                    <Badge variant="secondary" className="text-xs shrink-0">
                       {member.role}
                     </Badge>
                     {!member.is_adult && (
-                      <Badge variant="outline" className="text-xs">
+                      <Badge variant="outline" className="text-xs shrink-0">
                         Child
                       </Badge>
                     )}

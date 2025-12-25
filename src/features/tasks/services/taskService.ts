@@ -231,4 +231,33 @@ export const taskService = {
       throw error;
     }
   },
+
+  /**
+   * Get contacts with pending cadence tasks
+   */
+  async getContactsWithPendingTasks(userId?: string): Promise<string[]> {
+    const filters: Array<{ column: string; operator: 'eq' | 'in'; value: unknown }> = [
+      { column: 'status', operator: 'eq', value: 'pending' },
+    ];
+
+    if (userId) {
+      filters.push({ column: 'assigned_to', operator: 'eq', value: userId });
+    }
+
+    const { data, error } = await restClient.query<{ contact_id: string }>(
+      'cadence_tasks',
+      {
+        select: 'contact_id',
+        filters,
+      }
+    );
+
+    if (error) {
+      console.error('Error fetching contacts with pending tasks:', error);
+      throw error;
+    }
+
+    // Return unique contact IDs
+    return Array.from(new Set((data || []).map((t) => t.contact_id)));
+  },
 };

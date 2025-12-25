@@ -50,31 +50,31 @@ export function ContactOrganizationList({ contactId }: ContactOrganizationListPr
         return (
           <div
             key={link.id}
-            className="flex items-center justify-between rounded-lg border p-3"
+            className="flex items-center justify-between rounded-lg border p-2 gap-2"
           >
-            <div className="flex items-center gap-3 flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-1 min-w-0">
               <Building2 className="h-4 w-4 shrink-0 text-muted-foreground" />
               <div className="flex-1 min-w-0">
                 <Link
                   to={`/organizations/${org.id}`}
-                  className="font-medium hover:underline truncate block"
+                  className="text-sm font-medium hover:underline truncate block"
                 >
                   {org.name}
                 </Link>
-                <div className="flex items-center gap-2 mt-1">
+                <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
                   {link.role_title && (
-                    <span className="text-xs text-muted-foreground flex items-center gap-1">
-                      <Briefcase className="h-3 w-3" />
-                      {link.role_title}
+                    <span className="text-xs text-muted-foreground flex items-center gap-1 truncate">
+                      <Briefcase className="h-3 w-3 shrink-0" />
+                      <span className="truncate">{link.role_title}</span>
                     </span>
                   )}
                   {link.is_primary && (
-                    <Badge variant="secondary" className="text-xs">
+                    <Badge variant="secondary" className="text-xs shrink-0">
                       Primary
                     </Badge>
                   )}
                   {!link.is_current && (
-                    <Badge variant="outline" className="text-xs">
+                    <Badge variant="outline" className="text-xs shrink-0">
                       Past
                     </Badge>
                   )}
@@ -84,11 +84,11 @@ export function ContactOrganizationList({ contactId }: ContactOrganizationListPr
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 shrink-0"
+              className="h-7 w-7 shrink-0"
               onClick={() => setDeleteDialogOpen(link.id)}
               aria-label="Remove organization link"
             >
-              <X className="h-4 w-4" />
+              <X className="h-3.5 w-3.5" />
             </Button>
             <ConfirmDialog
               open={deleteDialogOpen === link.id}

@@ -174,6 +174,31 @@ export const interpersonalService = {
   },
 
   /**
+   * Update a secondary relationship
+   */
+  async updateSecondaryRelationship(
+    id: string,
+    payload: {
+      relationship_type?: string;
+      notes?: string;
+    }
+  ): Promise<SecondaryRelationship> {
+    const { data, error } = await supabase
+      .from('secondary_relationships')
+      .update(payload)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error updating secondary relationship:', error);
+      throw error;
+    }
+
+    return data as SecondaryRelationship;
+  },
+
+  /**
    * Delete a secondary relationship
    */
   async deleteSecondaryRelationship(id: string): Promise<void> {
