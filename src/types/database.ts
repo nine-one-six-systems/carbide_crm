@@ -42,6 +42,9 @@ export type SecondaryRelationshipType =
   | 'referral_source'
   | 'business_partner'
   | 'friend'
+  | 'spouse'
+  | 'husband'
+  | 'wife'
   | 'other';
 
 export type BusinessRelationshipType =

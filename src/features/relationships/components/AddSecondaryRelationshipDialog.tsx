@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -35,6 +35,9 @@ type RelationshipFormValues = z.infer<typeof relationshipSchema>;
 const relationshipTypeOptions = [
   { value: 'parent_child', label: 'Parent/Child' },
   { value: 'sibling', label: 'Sibling' },
+  { value: 'spouse', label: 'Spouse' },
+  { value: 'husband', label: 'Husband' },
+  { value: 'wife', label: 'Wife' },
   { value: 'colleague', label: 'Colleague' },
   { value: 'former_colleague', label: 'Former Colleague' },
   { value: 'manager_reports_to', label: 'Manager/Reports To' },
@@ -56,6 +59,7 @@ export function AddSecondaryRelationshipDialog({
 }: AddSecondaryRelationshipDialogProps) {
   const [open, setOpen] = useState(false);
   const [createContactDialogOpen, setCreateContactDialogOpen] = useState(false);
+  const [newlyCreatedContact, setNewlyCreatedContact] = useState<Contact | null>(null);
   const { data: contactsData, refetch: refetchContacts } = useContacts({ page: 1, pageSize: 100 });
   const { createSecondary, isCreatingSecondary } = useInterpersonalMutations();
 
@@ -68,19 +72,35 @@ export function AddSecondaryRelationshipDialog({
     },
   });
 
-  const contactOptions =
-    contactsData?.data
-      .filter((c) => c.id !== contactId)
-      .map((c) => ({
-        value: c.id,
-        label: `${c.first_name} ${c.last_name}`,
-      })) || [];
+  const contactOptions = useMemo(() => {
+    const baseOptions =
+      contactsData?.data
+        .filter((c) => c.id !== contactId)
+        .map((c) => ({
+          value: c.id,
+          label: `${c.first_name} ${c.last_name}`,
+        })) || [];
+
+    // Add newly created contact if not already in list
+    if (newlyCreatedContact && !baseOptions.find((o) => o.value === newlyCreatedContact.id)) {
+      return [
+        {
+          value: newlyCreatedContact.id,
+          label: `${newlyCreatedContact.first_name} ${newlyCreatedContact.last_name}`,
+        },
+        ...baseOptions,
+      ];
+    }
+    return baseOptions;
+  }, [contactsData, contactId, newlyCreatedContact]);
 
   const handleContactCreated = async (createdContact: Contact) => {
+    // Set the newly created contact in state immediately
+    setNewlyCreatedContact(createdContact);
     // Refetch contacts to ensure the list is up to date
     await refetchContacts();
     // Set the newly created contact as selected
-    form.setValue('related_contact_id', createdContact.id);
+    form.setValue('related_contact_id', createdContact.id, { shouldValidate: true });
     // Close the create dialog
     setCreateContactDialogOpen(false);
   };
@@ -94,6 +114,7 @@ export function AddSecondaryRelationshipDialog({
         notes: values.notes || undefined,
       });
       form.reset();
+      setNewlyCreatedContact(null);
       setOpen(false);
     } catch (error) {
       console.error('Error creating relationship:', error);
@@ -101,7 +122,16 @@ export function AddSecondaryRelationshipDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog 
+      open={open} 
+      onOpenChange={(isOpen) => {
+        setOpen(isOpen);
+        if (!isOpen) {
+          // Reset state when dialog closes
+          setNewlyCreatedContact(null);
+        }
+      }}
+    >
       <DialogTrigger asChild>
         {trigger || <Button variant="outline">Add Relationship</Button>}
       </DialogTrigger>
