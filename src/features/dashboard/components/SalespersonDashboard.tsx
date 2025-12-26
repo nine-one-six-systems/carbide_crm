@@ -2,6 +2,7 @@ import { format, isPast, isToday as isTodayDate, addDays, startOfDay } from 'dat
 import { Plus, AlertCircle, Clock, Calendar } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
+import { QueryErrorBoundary } from '@/components/error/ErrorBoundary';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -22,7 +23,7 @@ import { TaskForm } from '@/features/tasks/components/TaskForm';
 import { TaskList } from '@/features/tasks/components/TaskList';
 import { useTasks } from '@/features/tasks/hooks/useTasks';
 
-export function SalespersonDashboard() {
+function SalespersonDashboardContent() {
   const { profile } = useAuth();
   const today = startOfDay(new Date());
   const sevenDaysFromNow = addDays(today, 7);
@@ -196,5 +197,13 @@ function getTimeOfDay() {
   if (hour < 12) return 'morning';
   if (hour < 17) return 'afternoon';
   return 'evening';
+}
+
+export function SalespersonDashboard() {
+  return (
+    <QueryErrorBoundary>
+      <SalespersonDashboardContent />
+    </QueryErrorBoundary>
+  );
 }
 

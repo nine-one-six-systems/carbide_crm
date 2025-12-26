@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 
 import { leadershipDashboardService } from '../services/leadershipDashboardService';
 
-import type { DashboardFilters } from '../types/leadershipDashboard.types';
+import type { DashboardFilters, VentureSummary } from '../types/leadershipDashboard.types';
 
 const STALE_TIME = 1000 * 60 * 2; // 2 minutes
 const ACTIVITY_STALE_TIME = 1000 * 60; // 1 minute for activity feed
@@ -34,6 +34,14 @@ export function useLeadershipDashboard(filters: DashboardFilters) {
     enabled: filters.view === 'pipeline',
   });
 
+  // Venture summaries (only for venture view)
+  const venturesQuery = useQuery<VentureSummary[]>({
+    queryKey: ['leadership-dashboard', 'ventures', filters],
+    queryFn: () => leadershipDashboardService.getVentureSummaries(filters),
+    staleTime: STALE_TIME,
+    enabled: filters.view === 'venture',
+  });
+
   // Cold opportunities (always fetched)
   const coldQuery = useQuery({
     queryKey: ['leadership-dashboard', 'cold', filters],
@@ -52,20 +60,23 @@ export function useLeadershipDashboard(filters: DashboardFilters) {
   const isLoading =
     summaryQuery.isLoading ||
     activityVolumeQuery.isLoading ||
-    (filters.view === 'pipeline' && pipelinesQuery.isLoading);
+    (filters.view === 'pipeline' && pipelinesQuery.isLoading) ||
+    (filters.view === 'venture' && venturesQuery.isLoading);
 
   // Determine error state
   const isError =
     summaryQuery.isError ||
     activityVolumeQuery.isError ||
-    pipelinesQuery.isError ||
+    (filters.view === 'pipeline' && pipelinesQuery.isError) ||
+    (filters.view === 'venture' && venturesQuery.isError) ||
     coldQuery.isError ||
     activityQuery.isError;
 
   const error =
     summaryQuery.error ||
     activityVolumeQuery.error ||
-    pipelinesQuery.error ||
+    (filters.view === 'pipeline' ? pipelinesQuery.error : null) ||
+    (filters.view === 'venture' ? venturesQuery.error : null) ||
     coldQuery.error ||
     activityQuery.error;
 
@@ -74,6 +85,7 @@ export function useLeadershipDashboard(filters: DashboardFilters) {
     summaryQuery.refetch();
     activityVolumeQuery.refetch();
     pipelinesQuery.refetch();
+    venturesQuery.refetch();
     coldQuery.refetch();
     activityQuery.refetch();
   };
@@ -83,6 +95,7 @@ export function useLeadershipDashboard(filters: DashboardFilters) {
     summary: summaryQuery.data,
     activityVolume: activityVolumeQuery.data,
     pipelineSummaries: pipelinesQuery.data,
+    ventureSummaries: venturesQuery.data,
     coldOpportunities: coldQuery.data,
     recentActivity: activityQuery.data,
 
@@ -99,6 +112,7 @@ export function useLeadershipDashboard(filters: DashboardFilters) {
       summary: summaryQuery,
       activityVolume: activityVolumeQuery,
       pipelines: pipelinesQuery,
+      ventures: venturesQuery,
       cold: coldQuery,
       activity: activityQuery,
     },

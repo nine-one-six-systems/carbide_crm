@@ -56,6 +56,12 @@
   body {
     @apply bg-background text-foreground;
   }
+  
+  /* Global link focus-visible styles for accessibility */
+  a:focus-visible,
+  [role="link"]:focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+  }
 }
 
 /* Accessibility: Ensure minimum touch target size (44x44px) */

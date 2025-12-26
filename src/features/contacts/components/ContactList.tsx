@@ -2,6 +2,7 @@ import { useState } from 'react';
 
 import { LayoutGrid, Table as TableIcon, Users } from 'lucide-react';
 
+import { QueryErrorBoundary } from '@/components/error/ErrorBoundary';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -20,7 +21,7 @@ interface ContactListProps {
   onViewModeChange?: (mode: ViewMode) => void;
 }
 
-export function ContactList({
+function ContactListContent({
   searchParams,
   viewMode: controlledViewMode,
   onViewModeChange,
@@ -103,6 +104,14 @@ export function ContactList({
         <ContactTable contacts={data.data} />
       )}
     </div>
+  );
+}
+
+export function ContactList(props: ContactListProps) {
+  return (
+    <QueryErrorBoundary>
+      <ContactListContent {...props} />
+    </QueryErrorBoundary>
   );
 }
 

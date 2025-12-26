@@ -9,9 +9,6 @@ import {
   BarChart3,
   Settings,
   Search,
-  Mail,
-  Phone,
-  MessageSquare,
   Bell,
   User,
   LogOut,
@@ -82,7 +79,7 @@ export function HeaderNav() {
     .slice(0, 2) || 'U';
 
   return (
-    <header className="sticky top-0 z-50 flex h-14 items-center gap-2 border-b bg-background px-4">
+    <header className="sticky top-0 z-50 flex h-14 items-center gap-3 border-b bg-background px-4">
       {/* Mobile Menu */}
       <div className="md:hidden">
         <MobileSidebar />
@@ -91,16 +88,15 @@ export function HeaderNav() {
       {/* Logo */}
       <NavLink
         to="/dashboard"
-        className="flex items-center gap-2 mr-4 shrink-0"
+        className="flex items-center shrink-0 mr-2"
       >
         <div className="flex h-8 w-8 items-center justify-center rounded bg-primary text-primary-foreground">
           <span className="text-sm font-bold">C</span>
         </div>
-        <span className="hidden sm:inline font-semibold text-sm">Carbide CRM</span>
       </NavLink>
 
       {/* Navigation Links */}
-      <nav className="hidden md:flex items-center gap-1 flex-1">
+      <nav className="hidden md:flex items-center gap-1 flex-1 ml-2">
         {navItems.map((item) => {
           const Icon = item.icon;
           return (
@@ -126,7 +122,7 @@ export function HeaderNav() {
       </nav>
 
       {/* Search */}
-      <div className="flex-1 max-w-md mx-4">
+      <div className="flex-1 max-w-md ml-4">
         <Button
           variant="outline"
           className="relative w-full justify-start text-muted-foreground"
@@ -149,22 +145,7 @@ export function HeaderNav() {
       )}
 
       {/* Quick Actions */}
-      <div className="flex items-center gap-1">
-        {/* Email Quick Action */}
-        <Button variant="ghost" size="icon" className="h-9 w-9" aria-label="Send Email">
-          <Mail className="h-4 w-4" />
-        </Button>
-
-        {/* Call Quick Action */}
-        <Button variant="ghost" size="icon" className="h-9 w-9" aria-label="Make Call">
-          <Phone className="h-4 w-4" />
-        </Button>
-
-        {/* Chat Quick Action */}
-        <Button variant="ghost" size="icon" className="h-9 w-9" aria-label="Send Message">
-          <MessageSquare className="h-4 w-4" />
-        </Button>
-
+      <div className="flex items-center gap-2">
         {/* Theme Toggle */}
         <ThemeToggle />
 

@@ -1,5 +1,6 @@
 import { Building2 } from 'lucide-react';
 
+import { QueryErrorBoundary } from '@/components/error/ErrorBoundary';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { OrganizationSearchParams } from '@/types/api';
@@ -14,7 +15,7 @@ interface OrganizationListProps {
   searchParams: OrganizationSearchParams;
 }
 
-export function OrganizationList({ searchParams }: OrganizationListProps) {
+function OrganizationListContent({ searchParams }: OrganizationListProps) {
   const { data, isLoading, error } = useOrganizations(searchParams);
 
   if (isLoading) {
@@ -53,6 +54,14 @@ export function OrganizationList({ searchParams }: OrganizationListProps) {
         <OrganizationCard key={organization.id} organization={organization} />
       ))}
     </div>
+  );
+}
+
+export function OrganizationList(props: OrganizationListProps) {
+  return (
+    <QueryErrorBoundary>
+      <OrganizationListContent {...props} />
+    </QueryErrorBoundary>
   );
 }
 

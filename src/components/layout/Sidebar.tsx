@@ -42,6 +42,16 @@ function SidebarContent({ isMobile = false }: { isMobile?: boolean }) {
   const { sidebarCollapsed, setSidebarCollapsed, setSidebarOpen } = useUIStore();
   const { profile, user } = useAuth();
 
+  // Filter nav items based on user role
+  // Leadership dashboard is only visible to managers and admins
+  const filteredNavItems = navItems.filter((item) => {
+    if (item.href === '/leadership') {
+      const userRole = user?.role || profile?.role;
+      return userRole === 'manager' || userRole === 'admin';
+    }
+    return true;
+  });
+
   return (
     <div className="flex h-full flex-col border-r bg-background">
       <div className="flex h-16 items-center border-b px-4">
@@ -67,7 +77,7 @@ function SidebarContent({ isMobile = false }: { isMobile?: boolean }) {
       </div>
       <ScrollArea className="flex-1">
         <nav className="space-y-1 p-4" aria-label="Main navigation">
-          {navItems.map((item) => {
+          {filteredNavItems.map((item) => {
             const Icon = item.icon;
             return (
               <NavLink

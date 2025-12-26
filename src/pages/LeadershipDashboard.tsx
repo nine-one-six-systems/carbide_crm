@@ -3,7 +3,6 @@ import { AlertCircle, RefreshCw } from 'lucide-react';
 import { ErrorBoundary } from '@/components/error/ErrorBoundary';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
 import { ActivityVolumeCard } from '@/features/dashboard/components/ActivityVolumeCard';
 import { ColdOpportunitiesCard } from '@/features/dashboard/components/ColdOpportunitiesCard';
 import { DashboardFilters } from '@/features/dashboard/components/DashboardFilters';
@@ -11,6 +10,10 @@ import { DashboardSummaryCards } from '@/features/dashboard/components/Dashboard
 import { DashboardViewToggle } from '@/features/dashboard/components/DashboardViewToggle';
 import { PipelineSections } from '@/features/dashboard/components/PipelineSections';
 import { RecentActivityCard } from '@/features/dashboard/components/RecentActivityCard';
+import { VentureSection } from '@/features/dashboard/components/VentureSection';
+import { ActivityFeedSkeleton } from '@/features/dashboard/components/skeletons/ActivityFeedSkeleton';
+import { PipelineSectionSkeleton } from '@/features/dashboard/components/skeletons/PipelineSectionSkeleton';
+import { SummaryCardsSkeleton } from '@/features/dashboard/components/skeletons/SummaryCardsSkeleton';
 import { useDashboardFilters } from '@/features/dashboard/hooks/useDashboardFilters';
 import { useLeadershipDashboard } from '@/features/dashboard/hooks/useLeadershipDashboard';
 
@@ -20,6 +23,7 @@ export function LeadershipDashboard() {
     summary,
     activityVolume,
     pipelineSummaries,
+    ventureSummaries,
     coldOpportunities,
     recentActivity,
     isLoading,
@@ -79,12 +83,16 @@ export function LeadershipDashboard() {
       {/* Summary Row */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
         <div className="lg:col-span-4">
-          <ErrorBoundary fallback={<SummaryCardsFallback />}>
-            <DashboardSummaryCards summary={summary} isLoading={isLoading} />
+          <ErrorBoundary fallback={<SummaryCardsSkeleton />}>
+            {isLoading ? (
+              <SummaryCardsSkeleton />
+            ) : (
+              <DashboardSummaryCards summary={summary} isLoading={false} />
+            )}
           </ErrorBoundary>
         </div>
         <div className="lg:col-span-1">
-          <ErrorBoundary fallback={<ActivityVolumeFallback />}>
+          <ErrorBoundary fallback={<ActivityFeedSkeleton />}>
             <ActivityVolumeCard volume={activityVolume} isLoading={isLoading} />
           </ErrorBoundary>
         </div>
@@ -92,18 +100,33 @@ export function LeadershipDashboard() {
 
       {/* Pipeline/Venture Sections */}
       <div className="space-y-4">
-        {isLoading ? (
-          <div className="space-y-4">
-            <Skeleton className="h-48 w-full" />
-            <Skeleton className="h-48 w-full" />
-          </div>
-        ) : isPipelineView ? (
-          <PipelineSections pipelines={pipelineSummaries ?? []} />
+        {isPipelineView ? (
+          <PipelineSections pipelines={pipelineSummaries ?? []} isLoading={isLoading} />
         ) : (
-          <div className="rounded-lg border p-6">
-            <p className="text-muted-foreground text-center">
-              Venture view coming soon. Switch to Pipeline view to see data.
-            </p>
+          <div className="space-y-4">
+            {isLoading ? (
+              <>
+                <PipelineSectionSkeleton />
+                <PipelineSectionSkeleton />
+                <PipelineSectionSkeleton />
+              </>
+            ) : ventureSummaries && ventureSummaries.length > 0 ? (
+              ventureSummaries.map((venture) => (
+                <VentureSection
+                  key={venture.venture}
+                  venture={venture.venture}
+                  data={venture}
+                  isLoading={false}
+                  defaultExpanded={venture.attentionItems.length > 0}
+                />
+              ))
+            ) : (
+              <div className="rounded-lg border p-6">
+                <p className="text-muted-foreground text-center">
+                  No active opportunities in the selected time period.
+                </p>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -114,26 +137,15 @@ export function LeadershipDashboard() {
       )}
 
       {/* Recent Activity */}
-      {recentActivity && recentActivity.length > 0 && (
-        <RecentActivityCard activities={recentActivity} />
+      {isLoading ? (
+        <ActivityFeedSkeleton />
+      ) : (
+        recentActivity && recentActivity.length > 0 && (
+          <RecentActivityCard activities={recentActivity} />
+        )
       )}
     </div>
   );
-}
-
-// Fallback components
-function SummaryCardsFallback() {
-  return (
-    <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-      {[1, 2, 3, 4].map((i) => (
-        <Skeleton key={i} className="h-24 w-full" />
-      ))}
-    </div>
-  );
-}
-
-function ActivityVolumeFallback() {
-  return <Skeleton className="h-32 w-full" />;
 }
 
 export default LeadershipDashboard;

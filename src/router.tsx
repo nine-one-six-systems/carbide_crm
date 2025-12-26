@@ -1,8 +1,8 @@
 import { lazy, Suspense, useMemo } from 'react';
 
-import { createBrowserRouter, RouterProvider, useRouteError } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 
-import { ErrorFallback } from '@/components/error/ErrorFallback';
+import { RouteErrorFallback } from '@/components/error/RouteErrorBoundary';
 import { AppShell } from '@/components/layout/AppShell';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ProtectedRoute } from '@/features/auth/components/ProtectedRoute';
@@ -35,17 +35,6 @@ function LoadingFallback() {
   );
 }
 
-function RouteErrorBoundary() {
-  const error = useRouteError() as Error;
-  return (
-    <div className="min-h-screen flex items-center justify-center">
-      <ErrorFallback
-        error={error}
-        resetErrorBoundary={() => window.location.reload()}
-      />
-    </div>
-  );
-}
 
 export function AppRouter() {
   const router = useMemo(() => createBrowserRouter(
@@ -57,6 +46,7 @@ export function AppRouter() {
             <LoginPage />
           </Suspense>
         ),
+        errorElement: <RouteErrorFallback />,
       },
       {
         path: '/',
@@ -69,7 +59,7 @@ export function AppRouter() {
             </AppShell>
           </ProtectedRoute>
         ),
-        errorElement: <RouteErrorBoundary />,
+        errorElement: <RouteErrorFallback />,
       },
       {
         path: '/dashboard',
@@ -82,6 +72,7 @@ export function AppRouter() {
             </AppShell>
           </ProtectedRoute>
         ),
+        errorElement: <RouteErrorFallback />,
       },
       {
         path: '/contacts',
@@ -94,6 +85,7 @@ export function AppRouter() {
             </AppShell>
           </ProtectedRoute>
         ),
+        errorElement: <RouteErrorFallback />,
       },
       {
         path: '/contacts/:id',
@@ -106,6 +98,7 @@ export function AppRouter() {
             </AppShell>
           </ProtectedRoute>
         ),
+        errorElement: <RouteErrorFallback />,
       },
       {
         path: '/contacts/prospecting-tasks',
@@ -118,6 +111,7 @@ export function AppRouter() {
             </AppShell>
           </ProtectedRoute>
         ),
+        errorElement: <RouteErrorFallback />,
       },
       {
         path: '/contacts/cadence-tasks',
@@ -130,6 +124,7 @@ export function AppRouter() {
             </AppShell>
           </ProtectedRoute>
         ),
+        errorElement: <RouteErrorFallback />,
       },
       {
         path: '/organizations',
@@ -142,6 +137,7 @@ export function AppRouter() {
             </AppShell>
           </ProtectedRoute>
         ),
+        errorElement: <RouteErrorFallback />,
       },
       {
         path: '/organizations/:id',
@@ -154,6 +150,7 @@ export function AppRouter() {
             </AppShell>
           </ProtectedRoute>
         ),
+        errorElement: <RouteErrorFallback />,
       },
       {
         path: '/pipelines',
@@ -166,6 +163,7 @@ export function AppRouter() {
             </AppShell>
           </ProtectedRoute>
         ),
+        errorElement: <RouteErrorFallback />,
       },
       {
         path: '/tasks',
@@ -178,6 +176,7 @@ export function AppRouter() {
             </AppShell>
           </ProtectedRoute>
         ),
+        errorElement: <RouteErrorFallback />,
       },
       {
         path: '/batch-tasks',
@@ -190,6 +189,7 @@ export function AppRouter() {
             </AppShell>
           </ProtectedRoute>
         ),
+        errorElement: <RouteErrorFallback />,
       },
       {
         path: '/cadences',
@@ -202,6 +202,7 @@ export function AppRouter() {
             </AppShell>
           </ProtectedRoute>
         ),
+        errorElement: <RouteErrorFallback />,
       },
       {
         path: '/leadership',
@@ -214,6 +215,7 @@ export function AppRouter() {
             </AppShell>
           </ProtectedRoute>
         ),
+        errorElement: <RouteErrorFallback />,
       },
       {
         path: '/settings',
@@ -226,6 +228,7 @@ export function AppRouter() {
             </AppShell>
           </ProtectedRoute>
         ),
+        errorElement: <RouteErrorFallback />,
       },
       {
         path: '*',
@@ -234,6 +237,7 @@ export function AppRouter() {
             <NotFoundPage />
           </Suspense>
         ),
+        errorElement: <RouteErrorFallback />,
       },
     ],
     {

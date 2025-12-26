@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { format, subDays, isToday } from 'date-fns';
 import { AlertCircle, CheckCircle2, Clock } from 'lucide-react';
 
+import { QueryErrorBoundary } from '@/components/error/ErrorBoundary';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -28,7 +29,7 @@ interface TeamMemberStats {
   activeCadencesCount: number;
 }
 
-export function ManagerDashboard() {
+function ManagerDashboardContent() {
   const [dateRange, setDateRange] = useState<'7' | '30' | '90'>('30');
   const daysBack = parseInt(dateRange);
 
@@ -83,11 +84,12 @@ export function ManagerDashboard() {
         const completedCount = completedTasks?.length || 0;
 
         // Get active cadences count - count distinct active cadences where this member has assigned tasks
+        // Note: task_status enum only includes: 'pending', 'completed', 'triaged', 'dismissed'
         const { data: cadenceTasks } = await supabase
           .from('cadence_tasks')
           .select('applied_cadence_id')
           .eq('assigned_to', member.id)
-          .in('status', ['pending', 'in_progress']);
+          .in('status', ['pending', 'triaged']);
 
         // Get distinct applied cadence IDs and check if they're active
         const appliedCadenceIds = [...new Set((cadenceTasks || []).map((ct: any) => ct.applied_cadence_id))];
@@ -218,6 +220,14 @@ export function ManagerDashboard() {
         </Card>
       </div>
     </div>
+  );
+}
+
+export function ManagerDashboard() {
+  return (
+    <QueryErrorBoundary>
+      <ManagerDashboardContent />
+    </QueryErrorBoundary>
   );
 }
 

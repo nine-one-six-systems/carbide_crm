@@ -1,5 +1,6 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 
+import { QueryErrorBoundary } from '@/components/error/ErrorBoundary';
 import { ThemeProvider } from '@/components/theme/ThemeProvider';
 import { KeyboardShortcutHelp } from '@/components/ui/keyboard-shortcut-help';
 import { LiveRegionProvider } from '@/components/ui/live-region';
@@ -12,15 +13,17 @@ import '@/lib/i18n';
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        <AuthProvider>
-          <LiveRegionProvider>
-            <AppRouter />
-            <Toaster />
-            <KeyboardShortcutHelp />
-          </LiveRegionProvider>
-        </AuthProvider>
-      </ThemeProvider>
+      <QueryErrorBoundary>
+        <ThemeProvider>
+          <AuthProvider>
+            <LiveRegionProvider>
+              <AppRouter />
+              <Toaster />
+              <KeyboardShortcutHelp />
+            </LiveRegionProvider>
+          </AuthProvider>
+        </ThemeProvider>
+      </QueryErrorBoundary>
     </QueryClientProvider>
   );
 }

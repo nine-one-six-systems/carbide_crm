@@ -1,3 +1,4 @@
+import { QueryErrorBoundary } from '@/components/error/ErrorBoundary';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ActivityFeed } from '@/features/activities/components/ActivityFeed';
@@ -11,7 +12,7 @@ interface ContactDetailProps {
   contactId: string;
 }
 
-export function ContactDetail({ contactId }: ContactDetailProps) {
+function ContactDetailContent({ contactId }: ContactDetailProps) {
   const { data: contact, isLoading, error } = useContact(contactId);
   const { data: activities } = useContactActivities(contactId);
   const { currentIndex, totalContacts } = useContactNavigation();
@@ -85,6 +86,14 @@ export function ContactDetail({ contactId }: ContactDetailProps) {
         </aside>
       </div>
     </div>
+  );
+}
+
+export function ContactDetail(props: ContactDetailProps) {
+  return (
+    <QueryErrorBoundary>
+      <ContactDetailContent {...props} />
+    </QueryErrorBoundary>
   );
 }
 

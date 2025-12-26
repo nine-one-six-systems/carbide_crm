@@ -1,5 +1,6 @@
 import { Building2, Globe, MapPin, Link2 } from 'lucide-react';
 
+import { QueryErrorBoundary } from '@/components/error/ErrorBoundary';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,7 +16,7 @@ interface OrganizationDetailProps {
   organizationId: string;
 }
 
-export function OrganizationDetail({ organizationId }: OrganizationDetailProps) {
+function OrganizationDetailContent({ organizationId }: OrganizationDetailProps) {
   const { data: organization, isLoading, error } = useOrganization(organizationId);
 
   if (isLoading) {
@@ -168,6 +169,14 @@ export function OrganizationDetail({ organizationId }: OrganizationDetailProps) 
         </Card>
       </div>
     </div>
+  );
+}
+
+export function OrganizationDetail(props: OrganizationDetailProps) {
+  return (
+    <QueryErrorBoundary>
+      <OrganizationDetailContent {...props} />
+    </QueryErrorBoundary>
   );
 }
 
