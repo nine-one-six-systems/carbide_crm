@@ -61,7 +61,7 @@ export default function CadenceTasksPage() {
         <div className="border-b bg-white p-4">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h1 className="text-2xl font-semibold">Cadence Tasks</h1>
+              <h1 className="text-2xl font-semibold">In Cadence</h1>
               <p className="text-sm text-muted-foreground mt-1">
                 Contacts with active cadences
               </p>

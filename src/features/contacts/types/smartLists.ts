@@ -69,7 +69,7 @@ export const predefinedSmartLists: SmartList[] = [
   },
   {
     id: 'cadence-tasks',
-    name: 'Cadence Tasks',
+    name: 'In Cadence',
     icon: 'Workflow',
     filters: {
       page: 1,

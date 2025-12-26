@@ -2,6 +2,7 @@ import { useState } from 'react';
 
 import {
   Users,
+  Building2,
   CheckSquare,
   Calendar,
   GitBranch,
@@ -44,6 +45,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { title: 'Contacts', href: '/contacts', icon: Users },
+  { title: 'Organizations', href: '/organizations', icon: Building2 },
   { title: 'Tasks', href: '/tasks', icon: CheckSquare },
   { title: 'Cadences', href: '/cadences', icon: Calendar },
   { title: 'Pipelines', href: '/pipelines', icon: GitBranch },

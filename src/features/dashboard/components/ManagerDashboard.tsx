@@ -25,7 +25,7 @@ interface TeamMemberStats {
   overdueCount: number;
   dueTodayCount: number;
   completedCount: number;
-  cadencesAddedCount: number;
+  activeCadencesCount: number;
 }
 
 export function ManagerDashboard() {
@@ -82,14 +82,26 @@ export function ManagerDashboard() {
 
         const completedCount = completedTasks?.length || 0;
 
-        // Get cadences added count
-        const { data: cadences } = await supabase
-          .from('applied_cadences')
-          .select('id', { count: 'exact', head: true })
-          .eq('applied_by', member.id)
-          .gte('applied_at', format(subDays(new Date(), daysBack), 'yyyy-MM-dd'));
+        // Get active cadences count - count distinct active cadences where this member has assigned tasks
+        const { data: cadenceTasks } = await supabase
+          .from('cadence_tasks')
+          .select('applied_cadence_id')
+          .eq('assigned_to', member.id)
+          .in('status', ['pending', 'in_progress']);
 
-        const cadencesAddedCount = cadences?.length || 0;
+        // Get distinct applied cadence IDs and check if they're active
+        const appliedCadenceIds = [...new Set((cadenceTasks || []).map((ct: any) => ct.applied_cadence_id))];
+        
+        let activeCadencesCount = 0;
+        if (appliedCadenceIds.length > 0) {
+          const { data: cadences } = await supabase
+            .from('applied_cadences')
+            .select('id')
+            .in('id', appliedCadenceIds)
+            .eq('status', 'active');
+          
+          activeCadencesCount = cadences?.length || 0;
+        }
 
         stats.push({
           userId: member.id,
@@ -97,7 +109,7 @@ export function ManagerDashboard() {
           overdueCount,
           dueTodayCount,
           completedCount,
-          cadencesAddedCount,
+          activeCadencesCount,
         });
       }
 
@@ -147,7 +159,7 @@ export function ManagerDashboard() {
                 <TableHead>Overdue</TableHead>
                 <TableHead>Due Today</TableHead>
                 <TableHead>Completed ({dateRange}d)</TableHead>
-                <TableHead>Cadences Added</TableHead>
+                <TableHead>Active Cadences</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -157,7 +169,7 @@ export function ManagerDashboard() {
                   <TableCell>{getOverdueBadge(stat.overdueCount)}</TableCell>
                   <TableCell>{stat.dueTodayCount}</TableCell>
                   <TableCell>{stat.completedCount}</TableCell>
-                  <TableCell>{stat.cadencesAddedCount}</TableCell>
+                  <TableCell>{stat.activeCadencesCount}</TableCell>
                 </TableRow>
               ))}
               {(!teamStats || teamStats.length === 0) && (

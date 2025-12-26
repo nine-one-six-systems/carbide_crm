@@ -86,7 +86,7 @@ export function ContactsSidebar({
                   }
                 >
                   <Workflow className="h-4 w-4" />
-                  <span>Cadence Tasks</span>
+                  <span>In Cadence</span>
                 </NavLink>
               </nav>
             </div>
