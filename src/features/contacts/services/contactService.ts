@@ -1,4 +1,4 @@
-import { restClient, getCurrentUserId } from '@/lib/supabase/restClient';
+import { restClient, getCurrentUserIdFromToken } from '@/lib/supabase/restClient';
 import type {
   ContactSearchParams,
   ContactCreatePayload,
@@ -153,7 +153,9 @@ export const contactService = {
    * Create a new contact
    */
   async create(payload: ContactCreatePayload): Promise<Contact> {
-    const userId = getCurrentUserId();
+    // Use getCurrentUserIdFromToken to get user ID from JWT token
+    // This ensures it matches what RLS policies use (auth.uid())
+    const userId = await getCurrentUserIdFromToken();
 
     if (!userId) {
       throw new Error('User not authenticated');

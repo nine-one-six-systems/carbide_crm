@@ -3,6 +3,7 @@ import {
   Users,
   Building2,
   GitBranch,
+  FolderKanban,
   CheckSquare,
   ListChecks,
   Calendar,
@@ -10,6 +11,7 @@ import {
   Settings,
   Menu,
   X,
+  Rocket,
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 
@@ -30,7 +32,9 @@ const navItems: NavItem[] = [
   { title: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { title: 'Contacts', href: '/contacts', icon: Users },
   { title: 'Organizations', href: '/organizations', icon: Building2 },
+  { title: 'Ventures', href: '/ventures', icon: Rocket },
   { title: 'Pipelines', href: '/pipelines', icon: GitBranch },
+  { title: 'Projects', href: '/projects', icon: FolderKanban },
   { title: 'Tasks', href: '/tasks', icon: CheckSquare },
   { title: 'Batch Tasks', href: '/batch-tasks', icon: ListChecks },
   { title: 'Cadences', href: '/cadences', icon: Calendar },
@@ -40,14 +44,21 @@ const navItems: NavItem[] = [
 
 function SidebarContent({ isMobile = false }: { isMobile?: boolean }) {
   const { sidebarCollapsed, setSidebarCollapsed, setSidebarOpen } = useUIStore();
-  const { profile, user } = useAuth();
+  const { profile, user, isManager, isAdmin } = useAuth();
 
   // Filter nav items based on user role
-  // Leadership dashboard is only visible to managers and admins
   const filteredNavItems = navItems.filter((item) => {
+    // Leadership dashboard is only visible to managers and admins
     if (item.href === '/leadership') {
-      const userRole = user?.role || profile?.role;
-      return userRole === 'manager' || userRole === 'admin';
+      return isManager();
+    }
+    // Admin routes are only visible to admins
+    if (item.href.startsWith('/admin')) {
+      return isAdmin();
+    }
+    // Manager routes are only visible to managers and admins
+    if (item.href.startsWith('/manager')) {
+      return isManager();
     }
     return true;
   });

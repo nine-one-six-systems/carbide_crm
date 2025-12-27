@@ -16,12 +16,14 @@ interface ContactsSidebarProps {
   currentFilters: ContactSearchParams;
   onApplyFilter: (filters: ContactSearchParams) => void;
   selectedListId?: string;
+  onSelectedListIdChange?: (listId: string | undefined) => void;
 }
 
 export function ContactsSidebar({
   currentFilters,
   onApplyFilter,
   selectedListId: controlledSelectedListId,
+  onSelectedListIdChange,
 }: ContactsSidebarProps) {
   const location = useLocation();
   const { smartLists } = useSmartLists();
@@ -29,7 +31,12 @@ export function ContactsSidebar({
   const selectedListId = controlledSelectedListId ?? internalSelectedListId;
 
   const handleListClick = (list: { id: string; filters: ContactSearchParams }) => {
-    setSelectedListId(list.id);
+    // Update parent if callback provided, otherwise update internal state
+    if (onSelectedListIdChange) {
+      onSelectedListIdChange(list.id);
+    } else if (controlledSelectedListId === undefined) {
+      setInternalSelectedListId(list.id);
+    }
     onApplyFilter(list.filters);
   };
 

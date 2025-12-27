@@ -17,7 +17,7 @@ import { useOrganizationMutations } from '../hooks/useOrganizationMutations';
 
 interface OrganizationFormProps {
   organization?: Organization;
-  onSuccess?: () => void;
+  onSuccess?: (createdOrganization?: Organization) => void;
   onCancel?: () => void;
 }
 
@@ -63,15 +63,19 @@ export function OrganizationForm({
   });
 
   const onSubmit = (values: OrganizationFormValues) => {
-    const callbacks = {
-      onSuccess: () => {
-        onSuccess?.();
-      },
-    };
-
     if (organization) {
+      const callbacks = {
+        onSuccess: () => {
+          onSuccess?.(organization);
+        },
+      };
       update({ id: organization.id, ...values }, callbacks);
     } else {
+      const callbacks = {
+        onSuccess: (createdOrg?: Organization) => {
+          onSuccess?.(createdOrg);
+        },
+      };
       create(values, callbacks);
     }
   };

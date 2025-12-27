@@ -62,6 +62,7 @@ export default function ContactsPage() {
         currentFilters={filters}
         onApplyFilter={handleApplyFilter}
         selectedListId={selectedListId}
+        onSelectedListIdChange={setSelectedListId}
       />
 
       {/* Main Content */}

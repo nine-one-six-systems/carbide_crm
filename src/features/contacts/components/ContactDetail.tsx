@@ -21,16 +21,16 @@ function ContactDetailContent({ contactId }: ContactDetailProps) {
     return (
       <div className="h-screen flex flex-col bg-gray-50">
         <div className="flex-1 flex overflow-hidden">
-          <aside className="w-80 border-r bg-white">
+          <aside className="w-[320px] md:w-96 xl:w-[400px] border-r bg-white flex-shrink-0 min-w-0">
             <div className="p-4 space-y-4">
               <Skeleton className="h-32" />
               <Skeleton className="h-64" />
             </div>
           </aside>
-          <main className="flex-1 flex flex-col overflow-hidden bg-gray-50">
+          <main className="flex-1 flex flex-col overflow-hidden bg-gray-50 min-w-0">
             <Skeleton className="h-full" />
           </main>
-          <aside className="w-72 border-l bg-white">
+          <aside className="w-72 border-l bg-white flex-shrink-0 min-w-0">
             <div className="p-4 space-y-4">
               <Skeleton className="h-32" />
               <Skeleton className="h-32" />
@@ -56,8 +56,8 @@ function ContactDetailContent({ contactId }: ContactDetailProps) {
     <div className="h-screen flex flex-col bg-gray-50">
       {/* Three Column Layout */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Left Sidebar - Fixed width 320px (w-80) */}
-        <aside className="w-80 border-r bg-white flex-shrink-0">
+        {/* Left Sidebar - Responsive width: 320px (default), 384px (md), 400px (xl) */}
+        <aside className="w-[320px] md:w-96 xl:w-[400px] border-r bg-white flex-shrink-0 min-w-0">
           <ContactInfoSidebar 
             contact={contact}
             contactIndex={currentIndex}
@@ -67,7 +67,7 @@ function ContactDetailContent({ contactId }: ContactDetailProps) {
         </aside>
 
         {/* Center - Flexible width */}
-        <main className="flex-1 flex flex-col overflow-hidden bg-gray-50">
+        <main className="flex-1 flex flex-col overflow-hidden bg-gray-50 min-w-0">
           {activities && activities.length > 0 ? (
             <ActivityFeed activities={activities} contactId={contact.id} />
           ) : (
@@ -81,7 +81,7 @@ function ContactDetailContent({ contactId }: ContactDetailProps) {
         </main>
 
         {/* Right Sidebar - Fixed width 288px (w-72) */}
-        <aside className="w-72 border-l bg-white flex-shrink-0">
+        <aside className="w-72 border-l bg-white flex-shrink-0 min-w-0">
           <ContactRightSidebar contact={contact} />
         </aside>
       </div>

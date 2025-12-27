@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
+import { Plus } from 'lucide-react';
 
 import { ValidatedInput } from '@/components/forms/ValidatedInput';
 import { ValidatedSelect } from '@/components/forms/ValidatedSelect';
@@ -18,7 +19,9 @@ import {
 } from '@/components/ui/dialog';
 import { Form } from '@/components/ui/form';
 import { Label } from '@/components/ui/label';
+import type { Organization } from '@/types/database';
 
+import { OrganizationForm } from './OrganizationForm';
 import { useContactOrgLinkMutations } from '../hooks/useContactOrgLinks';
 import { useOrganizations } from '../hooks/useOrganizations';
 
@@ -75,7 +78,9 @@ export function AddContactToOrgDialog({
   trigger,
 }: AddContactToOrgDialogProps) {
   const [open, setOpen] = useState(false);
-  const { data: organizationsData } = useOrganizations({
+  const [createOrgDialogOpen, setCreateOrgDialogOpen] = useState(false);
+  const [newlyCreatedOrg, setNewlyCreatedOrg] = useState<Organization | null>(null);
+  const { data: organizationsData, refetch: refetchOrganizations } = useOrganizations({
     page: 1,
     pageSize: 100,
   });
@@ -95,11 +100,44 @@ export function AddContactToOrgDialog({
     },
   });
 
-  const organizationOptions =
-    organizationsData?.data.map((org) => ({
-      value: org.id,
-      label: org.name,
-    })) || [];
+  const organizationOptions = useMemo(() => {
+    const baseOptions =
+      organizationsData?.data.map((org) => ({
+        value: org.id,
+        label: org.name,
+      })) || [];
+
+    // If a new organization was just created, ensure it's in the options
+    if (newlyCreatedOrg && !baseOptions.find((opt) => opt.value === newlyCreatedOrg.id)) {
+      return [
+        { value: newlyCreatedOrg.id, label: newlyCreatedOrg.name },
+        ...baseOptions,
+      ];
+    }
+
+    return baseOptions;
+  }, [organizationsData?.data, newlyCreatedOrg]);
+
+  // When a new organization is created and options are updated, select it
+  useEffect(() => {
+    if (newlyCreatedOrg && organizationOptions.find((opt) => opt.value === newlyCreatedOrg.id)) {
+      form.setValue('organization_id', newlyCreatedOrg.id, { shouldValidate: true });
+    }
+  }, [newlyCreatedOrg, organizationOptions, form]);
+
+  const handleOrganizationCreated = async (createdOrg?: Organization) => {
+    if (createdOrg) {
+      setNewlyCreatedOrg(createdOrg);
+      // Close the create dialog first
+      setCreateOrgDialogOpen(false);
+      // Refetch to ensure the list is up to date, then set the value
+      await refetchOrganizations();
+      // Set the newly created organization in the form after refetch completes
+      form.setValue('organization_id', createdOrg.id, { shouldValidate: true });
+    } else {
+      setCreateOrgDialogOpen(false);
+    }
+  };
 
   const onSubmit = async (values: LinkFormValues) => {
     try {
@@ -150,12 +188,48 @@ export function AddContactToOrgDialog({
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <ValidatedSelect
-              name="organization_id"
-              label="Organization"
-              placeholder="Select organization"
-              options={organizationOptions}
-            />
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label htmlFor="organization_id" className="text-sm font-medium">
+                  Organization
+                </label>
+                <Dialog open={createOrgDialogOpen} onOpenChange={setCreateOrgDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 text-xs"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setCreateOrgDialogOpen(true);
+                      }}
+                    >
+                      <Plus className="h-3 w-3 mr-1" />
+                      Create New
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                      <DialogTitle>Create New Organization</DialogTitle>
+                      <DialogDescription>
+                        Create a new organization to add this contact to. The organization will be automatically selected after creation.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <OrganizationForm
+                      onSuccess={handleOrganizationCreated}
+                      onCancel={() => setCreateOrgDialogOpen(false)}
+                    />
+                  </DialogContent>
+                </Dialog>
+              </div>
+              <ValidatedSelect
+                name="organization_id"
+                label=""
+                placeholder="Select organization"
+                options={organizationOptions}
+              />
+            </div>
 
             <ValidatedInput name="role_title" label="Role Title" />
 

@@ -2,6 +2,10 @@ import type { Venture, BusinessRelationshipType } from '@/types/database';
 
 /**
  * List of ventures in the NineOneSix ecosystem
+ * 
+ * @deprecated Use useActiveVentures() hook from @/features/ventures/hooks/useVentures instead.
+ * This constant is kept for backward compatibility only. New code should use the database-backed
+ * ventures from the useActiveVentures() hook.
  */
 export const VENTURES: Array<{ value: Venture; label: string }> = [
   { value: 'forge', label: 'Forge' },
@@ -52,8 +56,12 @@ export const PIPELINE_TYPES: Array<{
 
 /**
  * Lookup function for venture label by value
+ * 
+ * @deprecated Use venture data from database via useActiveVentures() hook instead.
+ * This function is kept for backward compatibility only.
  */
 export function getVentureLabel(value: Venture): string {
+  console.warn('getVentureLabel is deprecated. Use venture data from database instead.');
   const venture = VENTURES.find((v) => v.value === value);
   return venture?.label ?? value;
 }
@@ -107,5 +115,62 @@ export const VENTURE_DISPLAY_ORDER: Venture[] = [
   'lucepta',
   'meridian_44',
   'trade_stone_group',
+];
+
+// =============================================================================
+// PROJECT MANAGEMENT CONSTANTS
+// =============================================================================
+
+import type {
+  ProjectScope,
+  ProjectCategory,
+  ProjectStatus,
+  ProjectHealth,
+} from '@/features/projects/types/project.types';
+
+/**
+ * Project scope options
+ */
+export const PROJECT_SCOPES: Array<{ value: ProjectScope; label: string }> = [
+  { value: 'internal', label: 'Internal' },
+  { value: 'external', label: 'External' },
+];
+
+/**
+ * Project category options
+ */
+export const PROJECT_CATEGORIES: Array<{ value: ProjectCategory; label: string }> = [
+  { value: 'product_development', label: 'Product Development' },
+  { value: 'client_delivery', label: 'Client Delivery' },
+  { value: 'strategic_initiative', label: 'Strategic Initiative' },
+  { value: 'operations_infrastructure', label: 'Operations/Infrastructure' },
+  { value: 'investment_portfolio', label: 'Investment/Portfolio' },
+];
+
+/**
+ * Project status options
+ */
+export const PROJECT_STATUSES: Array<{ value: ProjectStatus; label: string }> = [
+  { value: 'draft', label: 'Draft' },
+  { value: 'planning', label: 'Planning' },
+  { value: 'active', label: 'Active' },
+  { value: 'on_hold', label: 'On Hold' },
+  { value: 'completed', label: 'Completed' },
+  { value: 'cancelled', label: 'Cancelled' },
+];
+
+/**
+ * Project health options with color and icon
+ */
+export const PROJECT_HEALTH_OPTIONS: Array<{
+  value: ProjectHealth;
+  label: string;
+  color: string;
+  icon: string;
+}> = [
+  { value: 'not_started', label: 'Not Started', color: 'gray', icon: '⚪' },
+  { value: 'on_track', label: 'On Track', color: 'green', icon: '🟢' },
+  { value: 'at_risk', label: 'At Risk', color: 'yellow', icon: '🟡' },
+  { value: 'blocked', label: 'Blocked', color: 'red', icon: '🔴' },
 ];
 

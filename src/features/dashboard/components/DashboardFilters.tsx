@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { VENTURES } from '@/lib/constants';
+import { useActiveVentures } from '@/features/ventures/hooks/useVentures';
 
 import { formatPeriodLabel } from '../utils/periodUtils';
 
@@ -41,6 +41,7 @@ export function DashboardFilters({
   onReset,
   hideVentureFilter,
 }: DashboardFiltersProps) {
+  const { data: ventures } = useActiveVentures();
   const hasFilters = filters.venture || filters.ownerId || filters.pipelineType;
 
   return (
@@ -102,9 +103,9 @@ export function DashboardFilters({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All ventures</SelectItem>
-                    {VENTURES.map((venture) => (
-                      <SelectItem key={venture.value} value={venture.value}>
-                        {venture.label}
+                    {ventures?.map((venture) => (
+                      <SelectItem key={venture.slug} value={venture.slug}>
+                        {venture.name}
                       </SelectItem>
                     ))}
                   </SelectContent>

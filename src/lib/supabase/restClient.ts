@@ -126,7 +126,7 @@ export function getAccessTokenSync(): string | null {
 }
 
 /**
- * Get current user ID from stored session
+ * Get current user ID from stored session (synchronous, reads from localStorage)
  */
 export function getCurrentUserId(): string | null {
   if (typeof window === 'undefined') return null;
@@ -146,6 +146,29 @@ export function getCurrentUserId(): string | null {
     // Ignore errors
   }
   return null;
+}
+
+/**
+ * Get current user ID from JWT token (async, more reliable for RLS policies)
+ * This extracts the user ID from the access token, which matches what RLS policies use
+ */
+export async function getCurrentUserIdFromToken(): Promise<string | null> {
+  const accessToken = await getAccessToken();
+  if (!accessToken) {
+    return null;
+  }
+
+  try {
+    const parts = accessToken.split('.');
+    if (parts.length !== 3) {
+      return null;
+    }
+    const payloadPart = parts[1];
+    const decoded = JSON.parse(atob(payloadPart.replace(/-/g, '+').replace(/_/g, '/')));
+    return decoded.sub || null;
+  } catch {
+    return null;
+  }
 }
 
 // ============================================================================
@@ -652,6 +675,7 @@ export const restClient = {
   getAccessToken,
   getAccessTokenSync,
   getCurrentUserId,
+  getCurrentUserIdFromToken,
 };
 
 export default restClient;

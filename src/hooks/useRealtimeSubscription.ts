@@ -176,13 +176,22 @@ export function useRealtimeSubscription<T extends Record<string, unknown>>({
             // The subscription will still work with client-side filtering
             // The error is logged but doesn't prevent functionality
           } else {
-            console.error(`Realtime subscription error: ${channelName}`, err);
+            // Only log error if err exists and has meaningful content
             if (err) {
+              console.error(`Realtime subscription error: ${channelName}`, err);
               console.warn('Realtime subscription details:', {
                 table,
                 schema,
                 filter,
                 error: err,
+              });
+            } else {
+              // Log a warning without the error object if it's undefined
+              console.warn(`Realtime subscription error (no error details): ${channelName}`, {
+                table,
+                schema,
+                filter,
+                status,
               });
             }
           }

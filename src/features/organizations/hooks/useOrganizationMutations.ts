@@ -5,11 +5,12 @@ import type {
   OrganizationCreatePayload,
   OrganizationUpdatePayload,
 } from '@/types/api';
+import type { Organization } from '@/types/database';
 
 import { organizationService } from '../services/organizationService';
 
 interface MutationCallbacks {
-  onSuccess?: () => void;
+  onSuccess?: (data?: Organization) => void;
   onError?: (error: Error) => void;
 }
 
@@ -76,8 +77,8 @@ export function useOrganizationMutations() {
   // Wrapper functions that use callback pattern instead of promise-based
   const create = (payload: OrganizationCreatePayload, callbacks?: MutationCallbacks) => {
     createMutation.mutate(payload, {
-      onSuccess: () => {
-        callbacks?.onSuccess?.();
+      onSuccess: (data) => {
+        callbacks?.onSuccess?.(data);
       },
       onError: (error) => {
         callbacks?.onError?.(error);

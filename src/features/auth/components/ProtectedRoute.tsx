@@ -8,13 +8,17 @@ import type { UserRole } from '../types';
 interface ProtectedRouteProps {
   children: React.ReactNode;
   requiredRole?: UserRole[];
+  requireAdmin?: boolean;
+  requireManager?: boolean;
 }
 
 export function ProtectedRoute({
   children,
   requiredRole,
+  requireAdmin,
+  requireManager,
 }: ProtectedRouteProps) {
-  const { user, profile, loading, initialized } = useAuth();
+  const { user, profile, loading, initialized, isAdmin, isManager } = useAuth();
   const location = useLocation();
 
   // Show loading state while auth is initializing
@@ -35,10 +39,18 @@ export function ProtectedRoute({
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // User exists but no profile yet - allow access (profile may be created later)
-  // Only block if role is specifically required and we can't verify it
+  // Check role requirements
+  if (requireAdmin && !isAdmin()) {
+    return <Navigate to="/unauthorized" replace />;
+  }
+
+  if (requireManager && !isManager()) {
+    return <Navigate to="/unauthorized" replace />;
+  }
+
+  // Legacy requiredRole check for backward compatibility
   if (requiredRole && profile && !requiredRole.includes(profile.role)) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/unauthorized" replace />;
   }
 
   return <>{children}</>;

@@ -108,7 +108,7 @@ export function AddAddressDialog({
     <Button
       variant="default"
       size="icon"
-      className="h-[26px] w-[26px] min-h-0 min-w-0 rounded-full bg-blue-600 hover:bg-blue-700 text-white p-0 flex items-center justify-center"
+      className="h-6 w-6 !min-h-0 !min-w-0 rounded-full bg-blue-600 hover:bg-blue-700 text-white p-0 flex items-center justify-center"
     >
       <Plus className="h-3.5 w-3.5" />
     </Button>

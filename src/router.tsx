@@ -20,8 +20,13 @@ const PipelinesPage = lazy(() => import('@/pages/Pipelines').then((m) => ({ defa
 const TasksPage = lazy(() => import('@/pages/Tasks').then((m) => ({ default: m.default })));
 const BatchTasksPage = lazy(() => import('@/pages/BatchTasks').then((m) => ({ default: m.default })));
 const CadencesPage = lazy(() => import('@/pages/Cadences').then((m) => ({ default: m.default })));
+const ProjectsPage = lazy(() => import('@/pages/Projects').then((m) => ({ default: m.default })));
+const ProjectDetailPage = lazy(() => import('@/pages/ProjectDetail').then((m) => ({ default: m.default })));
 const LeadershipDashboardPage = lazy(() => import('@/pages/LeadershipDashboard').then((m) => ({ default: m.default })));
+const VentureListPage = lazy(() => import('@/pages/VentureList').then((m) => ({ default: m.default })));
+const VentureDetailPage = lazy(() => import('@/pages/VentureDetail').then((m) => ({ default: m.default })));
 const SettingsPage = lazy(() => import('@/pages/Settings').then((m) => ({ default: m.default })));
+const UnauthorizedPage = lazy(() => import('@/pages/Unauthorized').then((m) => ({ default: m.default })));
 const NotFoundPage = lazy(() => import('@/pages/NotFound').then((m) => ({ default: m.default })));
 
 function LoadingFallback() {
@@ -44,6 +49,15 @@ export function AppRouter() {
         element: (
           <Suspense fallback={<LoadingFallback />}>
             <LoginPage />
+          </Suspense>
+        ),
+        errorElement: <RouteErrorFallback />,
+      },
+      {
+        path: '/unauthorized',
+        element: (
+          <Suspense fallback={<LoadingFallback />}>
+            <UnauthorizedPage />
           </Suspense>
         ),
         errorElement: <RouteErrorFallback />,
@@ -166,6 +180,32 @@ export function AppRouter() {
         errorElement: <RouteErrorFallback />,
       },
       {
+        path: '/projects',
+        element: (
+          <ProtectedRoute>
+            <AppShell>
+              <Suspense fallback={<LoadingFallback />}>
+                <ProjectsPage />
+              </Suspense>
+            </AppShell>
+          </ProtectedRoute>
+        ),
+        errorElement: <RouteErrorFallback />,
+      },
+      {
+        path: '/projects/:id',
+        element: (
+          <ProtectedRoute>
+            <AppShell>
+              <Suspense fallback={<LoadingFallback />}>
+                <ProjectDetailPage />
+              </Suspense>
+            </AppShell>
+          </ProtectedRoute>
+        ),
+        errorElement: <RouteErrorFallback />,
+      },
+      {
         path: '/tasks',
         element: (
           <ProtectedRoute>
@@ -207,10 +247,62 @@ export function AppRouter() {
       {
         path: '/leadership',
         element: (
-          <ProtectedRoute requiredRole={['manager', 'admin']}>
+          <ProtectedRoute requireManager={true}>
             <AppShell>
               <Suspense fallback={<LoadingFallback />}>
                 <LeadershipDashboardPage />
+              </Suspense>
+            </AppShell>
+          </ProtectedRoute>
+        ),
+        errorElement: <RouteErrorFallback />,
+      },
+      {
+        path: '/ventures',
+        element: (
+          <ProtectedRoute>
+            <AppShell>
+              <Suspense fallback={<LoadingFallback />}>
+                <VentureListPage />
+              </Suspense>
+            </AppShell>
+          </ProtectedRoute>
+        ),
+        errorElement: <RouteErrorFallback />,
+      },
+      {
+        path: '/ventures/:slug',
+        element: (
+          <ProtectedRoute>
+            <AppShell>
+              <Suspense fallback={<LoadingFallback />}>
+                <VentureDetailPage />
+              </Suspense>
+            </AppShell>
+          </ProtectedRoute>
+        ),
+        errorElement: <RouteErrorFallback />,
+      },
+      {
+        path: '/admin/*',
+        element: (
+          <ProtectedRoute requireAdmin={true}>
+            <AppShell>
+              <Suspense fallback={<LoadingFallback />}>
+                <NotFoundPage />
+              </Suspense>
+            </AppShell>
+          </ProtectedRoute>
+        ),
+        errorElement: <RouteErrorFallback />,
+      },
+      {
+        path: '/manager/*',
+        element: (
+          <ProtectedRoute requireManager={true}>
+            <AppShell>
+              <Suspense fallback={<LoadingFallback />}>
+                <NotFoundPage />
               </Suspense>
             </AppShell>
           </ProtectedRoute>

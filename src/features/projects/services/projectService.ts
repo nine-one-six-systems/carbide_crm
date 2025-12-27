@@ -110,6 +110,14 @@ async function getCurrentUserIdFromToken(): Promise<string | null> {
   }
 }
 
+/**
+ * Normalize date value: convert empty strings to null, keep valid dates as-is
+ */
+function normalizeDate(value: string | null | undefined): string | null {
+  if (value === undefined || value === null || value === '') return null;
+  return value;
+}
+
 // =============================================================================
 // TRANSFORMATION HELPERS
 // =============================================================================
@@ -362,8 +370,8 @@ export const projectService = {
       health: 'not_started' as const,
       ventures: payload.ventures,
       owner_id: payload.ownerId,
-      start_date: payload.startDate || null,
-      target_date: payload.targetDate || null,
+      start_date: normalizeDate(payload.startDate),
+      target_date: normalizeDate(payload.targetDate),
       github_project_url: payload.githubProjectUrl || null,
       created_by: userId,
     };
@@ -413,9 +421,9 @@ export const projectService = {
     }
     if (payload.ventures !== undefined) dbPayload.ventures = payload.ventures;
     if (payload.ownerId !== undefined) dbPayload.owner_id = payload.ownerId;
-    if (payload.startDate !== undefined) dbPayload.start_date = payload.startDate;
-    if (payload.targetDate !== undefined) dbPayload.target_date = payload.targetDate;
-    if (payload.completedDate !== undefined) dbPayload.completed_date = payload.completedDate;
+    if (payload.startDate !== undefined) dbPayload.start_date = normalizeDate(payload.startDate);
+    if (payload.targetDate !== undefined) dbPayload.target_date = normalizeDate(payload.targetDate);
+    if (payload.completedDate !== undefined) dbPayload.completed_date = normalizeDate(payload.completedDate);
     if (payload.githubProjectUrl !== undefined) dbPayload.github_project_url = payload.githubProjectUrl;
 
     const { data, error } = await restClient.update<ProjectRow>(
@@ -483,8 +491,8 @@ export const projectService = {
       name: payload.name,
       description: payload.description || null,
       order: nextOrder,
-      start_date: payload.startDate || null,
-      target_date: payload.targetDate || null,
+      start_date: normalizeDate(payload.startDate),
+      target_date: normalizeDate(payload.targetDate),
       status: 'not_started' as const,
     };
 
@@ -513,8 +521,8 @@ export const projectService = {
 
     if (payload.name !== undefined) dbPayload.name = payload.name;
     if (payload.description !== undefined) dbPayload.description = payload.description;
-    if (payload.startDate !== undefined) dbPayload.start_date = payload.startDate;
-    if (payload.targetDate !== undefined) dbPayload.target_date = payload.targetDate;
+    if (payload.startDate !== undefined) dbPayload.start_date = normalizeDate(payload.startDate);
+    if (payload.targetDate !== undefined) dbPayload.target_date = normalizeDate(payload.targetDate);
     if (payload.status !== undefined) {
       dbPayload.status = payload.status;
       if (payload.status !== currentPhase.status) {
@@ -616,7 +624,7 @@ export const projectService = {
       name: payload.name,
       description: payload.description || null,
       order: nextOrder,
-      target_date: payload.targetDate || null,
+      target_date: normalizeDate(payload.targetDate),
       completed: false,
     };
 
@@ -650,7 +658,7 @@ export const projectService = {
 
     if (payload.name !== undefined) dbPayload.name = payload.name;
     if (payload.description !== undefined) dbPayload.description = payload.description;
-    if (payload.targetDate !== undefined) dbPayload.target_date = payload.targetDate;
+    if (payload.targetDate !== undefined) dbPayload.target_date = normalizeDate(payload.targetDate);
     if (payload.completed !== undefined) {
       dbPayload.completed = payload.completed;
       dbPayload.completed_at = payload.completed ? new Date().toISOString() : null;

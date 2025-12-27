@@ -8,12 +8,12 @@ import { ValidatedSelect } from '@/components/forms/ValidatedSelect';
 import { ValidatedTextarea } from '@/components/forms/ValidatedTextarea';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel } from '@/components/ui/form';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Separator } from '@/components/ui/separator';
+import { VentureSelect } from '@/features/ventures/components/VentureSelect';
 import { projectFormSchema, type ProjectFormValues } from '@/lib/validators/project';
 import { restClient } from '@/lib/supabase/restClient';
 import type { Profile } from '@/types/database';
-import type { Venture } from '@/types/database';
 import {
   PROJECT_CATEGORY_LABELS,
   PROJECT_SCOPE_LABELS,
@@ -27,18 +27,6 @@ interface ProjectFormProps {
   onSuccess?: () => void;
   onCancel?: () => void;
 }
-
-const VENTURES: Array<{ value: Venture; label: string }> = [
-  { value: 'forge', label: 'Forge' },
-  { value: 'hearth', label: 'Hearth' },
-  { value: 'anvil', label: 'Anvil' },
-  { value: 'crucible', label: 'Crucible' },
-  { value: 'foundry', label: 'Foundry' },
-  { value: 'carbide', label: 'Carbide' },
-  { value: 'lucepta', label: 'Lucepta' },
-  { value: 'meridian_44', label: 'Meridian 44' },
-  { value: 'trade_stone_group', label: 'Trade Stone Group' },
-];
 
 export function ProjectForm({ project, onSuccess, onCancel }: ProjectFormProps) {
   const { create, update, isCreating, isUpdating } = useProjectMutations();
@@ -105,8 +93,6 @@ export function ProjectForm({ project, onSuccess, onCancel }: ProjectFormProps) 
     }
   };
 
-  const selectedVentures = form.watch('ventures');
-
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -155,35 +141,25 @@ export function ProjectForm({ project, onSuccess, onCancel }: ProjectFormProps) 
           />
         </div>
 
-        <div>
-          <FormLabel>Ventures *</FormLabel>
-          <FormDescription className="mb-2">
-            Select one or more ventures associated with this project
-          </FormDescription>
-          <div className="grid grid-cols-2 gap-2">
-            {VENTURES.map((venture) => (
-              <div key={venture.value} className="flex items-center space-x-2">
-                <Checkbox
-                  checked={selectedVentures.includes(venture.value)}
-                  onCheckedChange={(checked) => {
-                    const current = form.getValues('ventures');
-                    if (checked) {
-                      form.setValue('ventures', [...current, venture.value]);
-                    } else {
-                      form.setValue(
-                        'ventures',
-                        current.filter((v) => v !== venture.value)
-                      );
-                    }
-                  }}
+        <FormField
+          control={form.control}
+          name="ventures"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Ventures *</FormLabel>
+              <FormDescription>
+                Select one or more ventures associated with this project
+              </FormDescription>
+              <FormControl>
+                <VentureSelect
+                  value={field.value || []}
+                  onChange={field.onChange}
                 />
-                <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                  {venture.label}
-                </label>
-              </div>
-            ))}
-          </div>
-        </div>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         <ValidatedSelect
           name="ownerId"

@@ -201,23 +201,24 @@ export function ContactInfoSidebar({
 
   return (
     <>
-      <ScrollArea className="h-full">
-        <div className="p-5 space-y-5">
+      <div className="h-full w-full min-w-0 overflow-hidden">
+        <ScrollArea className="h-full w-full">
+          <div className="p-6 space-y-4 w-full box-border">
           {/* Contact Header */}
-          <div className="flex items-start gap-4 pb-5 border-b">
+          <div className="flex items-start gap-4 pb-4 border-b min-w-0">
             <Avatar className="h-16 w-16 ring-2 ring-offset-2 ring-emerald-500/20 shrink-0">
               <AvatarImage src={contact.avatar_url || undefined} alt={fullName} />
               <AvatarFallback className="text-lg">{initials}</AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <h1 className="text-lg font-semibold truncate">{fullName}</h1>
+              <div className="flex items-center gap-2 mb-1 min-w-0">
+                <h1 className="text-lg font-semibold truncate flex-1 min-w-0">{fullName}</h1>
                 <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0">
                   <Star className="h-4 w-4" />
                 </Button>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0 ml-auto">
+                    <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0">
                       <MoreVertical className="h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>
@@ -254,168 +255,172 @@ export function ContactInfoSidebar({
           </div>
 
           {/* Primary Contact Methods */}
-        <div className="space-y-4">
+        <div className="space-y-3">
           {/* Phones */}
           <div className="space-y-1.5">
-          {contact.phones && contact.phones.length > 0 && (
-            <>
-              {contact.phones.map((phone, idx) => (
-                <div
-                  key={idx}
-                  className={`flex items-center gap-2 ${
-                    phone.is_primary ? 'text-emerald-600 font-medium' : 'text-sm'
-                  }`}
-                >
-                  <Phone className="h-4 w-4 shrink-0 text-muted-foreground" />
-                  <span className="flex-1 min-w-0 truncate">{formatPhoneNumber(phone.value)}</span>
-                  {phone.label && (
-                    <span className="text-xs text-muted-foreground shrink-0">({phone.label})</span>
-                  )}
-                  <div className="flex items-center gap-1.5 ml-auto">
-                    <EditPhoneDialog
-                      contactId={contact.id}
-                      phoneIndex={idx}
-                      existingPhones={contact.phones || []}
-                    />
-                    {idx === contact.phones.length - 1 && (
-                      <AddPhoneDialog
+            {contact.phones && contact.phones.length > 0 && (
+              <>
+                {contact.phones.map((phone, idx) => (
+                  <div
+                    key={idx}
+                    className={`flex items-start gap-2 min-w-0 ${
+                      phone.is_primary ? 'text-emerald-600 font-medium' : 'text-sm'
+                    }`}
+                  >
+                    <Phone className="h-4 w-4 shrink-0 text-muted-foreground mt-0.5" />
+                    <div className="flex-1 min-w-0">
+                      <div className="truncate">{formatPhoneNumber(phone.value)}</div>
+                      {phone.label && (
+                        <div className="text-xs text-muted-foreground mt-0.5">({phone.label})</div>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0 mt-0.5">
+                      {idx === contact.phones.length - 1 && (
+                        <AddPhoneDialog
+                          contactId={contact.id}
+                          existingPhones={contact.phones || []}
+                          iconOnly={true}
+                          circular={true}
+                        />
+                      )}
+                      <EditPhoneDialog
                         contactId={contact.id}
+                        phoneIndex={idx}
                         existingPhones={contact.phones || []}
-                        iconOnly={true}
-                        circular={true}
                       />
-                    )}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </>
-          )}
-          {(!contact.phones || contact.phones.length === 0) && (
-            <AddPhoneDialog
-              contactId={contact.id}
-              existingPhones={contact.phones || []}
-              trigger={
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="h-8 w-full justify-start text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 px-2 -mx-2"
-                >
-                  <Plus className="h-3.5 w-3.5 mr-1.5" />
-                  <span className="text-sm">Add phone</span>
-                </Button>
-              }
-            />
-          )}
+                ))}
+              </>
+            )}
+            {(!contact.phones || contact.phones.length === 0) && (
+              <AddPhoneDialog
+                contactId={contact.id}
+                existingPhones={contact.phones || []}
+                trigger={
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="h-8 w-full justify-start text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 px-2 -mx-2"
+                  >
+                    <Plus className="h-3.5 w-3.5 mr-1.5" />
+                    <span className="text-sm">Add phone</span>
+                  </Button>
+                }
+              />
+            )}
           </div>
 
           {/* Emails */}
           <div className="space-y-1.5">
-          {contact.emails && contact.emails.length > 0 && (
-            <>
-              {contact.emails.map((email, idx) => (
-                <div
-                  key={idx}
-                  className={`flex items-center gap-2 ${
-                    email.is_primary ? 'text-emerald-600 font-medium' : 'text-sm'
-                  }`}
-                >
-                  <Mail className="h-4 w-4 shrink-0 text-muted-foreground" />
-                  <span className="flex-1 min-w-0 truncate">{email.value}</span>
-                  {email.label && (
-                    <span className="text-xs text-muted-foreground shrink-0">({email.label})</span>
-                  )}
-                  <div className="flex items-center gap-1.5 ml-auto">
-                    <EditEmailDialog
-                      contactId={contact.id}
-                      emailIndex={idx}
-                      existingEmails={contact.emails || []}
-                    />
-                    {idx === contact.emails.length - 1 && (
-                      <AddEmailDialog
+            {contact.emails && contact.emails.length > 0 && (
+              <>
+                {contact.emails.map((email, idx) => (
+                  <div
+                    key={idx}
+                    className={`flex items-start gap-2 min-w-0 ${
+                      email.is_primary ? 'text-emerald-600 font-medium' : 'text-sm'
+                    }`}
+                  >
+                    <Mail className="h-4 w-4 shrink-0 text-muted-foreground mt-0.5" />
+                    <div className="flex-1 min-w-0">
+                      <div className="truncate">{email.value}</div>
+                      {email.label && (
+                        <div className="text-xs text-muted-foreground mt-0.5">({email.label})</div>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0 mt-0.5">
+                      {idx === contact.emails.length - 1 && (
+                        <AddEmailDialog
+                          contactId={contact.id}
+                          existingEmails={contact.emails || []}
+                          iconOnly={true}
+                          circular={true}
+                        />
+                      )}
+                      <EditEmailDialog
                         contactId={contact.id}
+                        emailIndex={idx}
                         existingEmails={contact.emails || []}
-                        iconOnly={true}
-                        circular={true}
                       />
-                    )}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </>
-          )}
-          {(!contact.emails || contact.emails.length === 0) && (
-            <AddEmailDialog
-              contactId={contact.id}
-              existingEmails={contact.emails || []}
-              trigger={
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="h-8 w-full justify-start text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 px-2 -mx-2"
-                >
-                  <Plus className="h-3.5 w-3.5 mr-1.5" />
-                  <span className="text-sm">Add email</span>
-                </Button>
-              }
-            />
-          )}
+                ))}
+              </>
+            )}
+            {(!contact.emails || contact.emails.length === 0) && (
+              <AddEmailDialog
+                contactId={contact.id}
+                existingEmails={contact.emails || []}
+                trigger={
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="h-8 w-full justify-start text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 px-2 -mx-2"
+                  >
+                    <Plus className="h-3.5 w-3.5 mr-1.5" />
+                    <span className="text-sm">Add email</span>
+                  </Button>
+                }
+              />
+            )}
           </div>
 
           {/* Addresses */}
           <div className="space-y-1.5">
-          {contact.addresses && contact.addresses.length > 0 && (
-            <>
-              {contact.addresses.map((address, idx) => (
-                <div
-                  key={idx}
-                  className="flex items-start gap-2 text-sm"
-                >
-                  <MapPin className="h-4 w-4 shrink-0 text-muted-foreground mt-0.5" />
-                  <div className="flex-1 min-w-0">
-                    {address.street1 && <div className="truncate">{address.street1}</div>}
-                    {address.street2 && <div className="truncate">{address.street2}</div>}
-                    {(address.city || address.state || address.postal_code) && (
-                      <div className="truncate">
-                        {address.city && `${address.city}, `}
-                        {address.state} {address.postal_code}
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-1.5 mt-0.5 ml-auto">
-                    <EditAddressDialog
-                      contactId={contact.id}
-                      addressIndex={idx}
-                      existingAddresses={contact.addresses || []}
-                    />
-                    {idx === contact.addresses.length - 1 && (
-                      <AddAddressDialog
+            {contact.addresses && contact.addresses.length > 0 && (
+              <>
+                {contact.addresses.map((address, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-start gap-2 min-w-0 text-sm"
+                  >
+                    <MapPin className="h-4 w-4 shrink-0 text-muted-foreground mt-0.5" />
+                    <div className="flex-1 min-w-0">
+                      {address.street1 && <div className="truncate">{address.street1}</div>}
+                      {address.street2 && <div className="truncate">{address.street2}</div>}
+                      {(address.city || address.state || address.postal_code) && (
+                        <div className="truncate">
+                          {address.city && `${address.city}, `}
+                          {address.state} {address.postal_code}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0 mt-0.5">
+                      {idx === contact.addresses.length - 1 && (
+                        <AddAddressDialog
+                          contactId={contact.id}
+                          existingAddresses={contact.addresses || []}
+                          iconOnly={true}
+                          circular={true}
+                        />
+                      )}
+                      <EditAddressDialog
                         contactId={contact.id}
+                        addressIndex={idx}
                         existingAddresses={contact.addresses || []}
-                        iconOnly={true}
-                        circular={true}
                       />
-                    )}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </>
-          )}
-          {(!contact.addresses || contact.addresses.length === 0) && (
-            <AddAddressDialog
-              contactId={contact.id}
-              existingAddresses={contact.addresses || []}
-              trigger={
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="h-8 w-full justify-start text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 px-2 -mx-2"
-                >
-                  <Plus className="h-3.5 w-3.5 mr-1.5" />
-                  <span className="text-sm">Add address</span>
-                </Button>
-              }
-            />
-          )}
+                ))}
+              </>
+            )}
+            {(!contact.addresses || contact.addresses.length === 0) && (
+              <AddAddressDialog
+                contactId={contact.id}
+                existingAddresses={contact.addresses || []}
+                trigger={
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="h-8 w-full justify-start text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 px-2 -mx-2"
+                  >
+                    <Plus className="h-3.5 w-3.5 mr-1.5" />
+                    <span className="text-sm">Add address</span>
+                  </Button>
+                }
+              />
+            )}
           </div>
         </div>
 
@@ -448,16 +453,16 @@ export function ContactInfoSidebar({
           onConfirm={handleDeleteAddress}
         />
 
-        <Separator className="my-5" />
+        <Separator className="my-4" />
 
         {/* Relationships */}
         <Collapsible open={relationshipsOpen} onOpenChange={setRelationshipsOpen}>
-          <CollapsibleTrigger className="flex items-center justify-between w-full py-2.5 hover:bg-muted/50 rounded-lg px-3 -mx-3 transition-colors">
-            <div className="flex items-center gap-2">
+          <CollapsibleTrigger className="flex items-center justify-between w-full py-2.5 hover:bg-muted/50 rounded-lg px-3 -mx-3 transition-colors min-w-0">
+            <div className="flex items-center gap-2 min-w-0 flex-1">
               <Users className="h-4 w-4 text-muted-foreground shrink-0" />
-              <span className="font-medium text-sm">Relationships</span>
+              <span className="font-medium text-sm truncate">Relationships</span>
               {relationshipCount > 0 && (
-                <Badge variant="secondary" className="h-5 px-1.5 text-xs">
+                <Badge variant="secondary" className="h-5 px-1.5 text-xs shrink-0">
                   {relationshipCount}
                 </Badge>
               )}
@@ -468,9 +473,9 @@ export function ContactInfoSidebar({
               <ChevronRight className="h-4 w-4 shrink-0" />
             )}
           </CollapsibleTrigger>
-          <CollapsibleContent className="space-y-3 pt-3">
+          <CollapsibleContent className="space-y-2 pt-2">
             {primaryGroups && primaryGroups.length > 0 && (
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 {primaryGroups.map((group) => (
                   <PrimaryRelationshipGroup
                     key={group.id}
@@ -484,7 +489,7 @@ export function ContactInfoSidebar({
             <AddSecondaryRelationshipDialog
               contactId={contact.id}
               trigger={
-                <Button variant="ghost" size="sm" className="w-full justify-start text-emerald-600 mt-3">
+                <Button variant="ghost" size="sm" className="w-full justify-start text-emerald-600 mt-2">
                   <Plus className="h-4 w-4 mr-2 shrink-0" />
                   Add relationship
                 </Button>
@@ -493,16 +498,16 @@ export function ContactInfoSidebar({
           </CollapsibleContent>
         </Collapsible>
 
-        <Separator className="my-5" />
+        <Separator className="my-4" />
 
         {/* Organizations */}
         <Collapsible open={organizationsOpen} onOpenChange={setOrganizationsOpen}>
-          <CollapsibleTrigger className="flex items-center justify-between w-full py-2.5 hover:bg-muted/50 rounded-lg px-3 -mx-3 transition-colors">
-            <div className="flex items-center gap-2">
+          <CollapsibleTrigger className="flex items-center justify-between w-full py-2.5 hover:bg-muted/50 rounded-lg px-3 -mx-3 transition-colors min-w-0">
+            <div className="flex items-center gap-2 min-w-0 flex-1">
               <Building2 className="h-4 w-4 text-muted-foreground shrink-0" />
-              <span className="font-medium text-sm">Organizations</span>
+              <span className="font-medium text-sm truncate">Organizations</span>
               {organizationCount > 0 && (
-                <Badge variant="secondary" className="h-5 px-1.5 text-xs">
+                <Badge variant="secondary" className="h-5 px-1.5 text-xs shrink-0">
                   {organizationCount}
                 </Badge>
               )}
@@ -513,12 +518,12 @@ export function ContactInfoSidebar({
               <ChevronRight className="h-4 w-4 shrink-0" />
             )}
           </CollapsibleTrigger>
-          <CollapsibleContent className="pt-3">
+          <CollapsibleContent className="pt-2">
             <ContactOrganizationList contactId={contact.id} />
             <AddContactToOrgDialog
               contactId={contact.id}
               trigger={
-                <Button variant="ghost" size="sm" className="w-full justify-start text-emerald-600 mt-3">
+                <Button variant="ghost" size="sm" className="w-full justify-start text-emerald-600 mt-2">
                   <Plus className="h-4 w-4 mr-2 shrink-0" />
                   Add to organization
                 </Button>
@@ -527,14 +532,14 @@ export function ContactInfoSidebar({
           </CollapsibleContent>
         </Collapsible>
 
-        <Separator className="my-5" />
+        <Separator className="my-4" />
 
         {/* Details */}
         <Collapsible open={detailsOpen} onOpenChange={setDetailsOpen}>
-          <CollapsibleTrigger className="flex items-center justify-between w-full py-2.5 hover:bg-muted/50 rounded-lg px-3 -mx-3 transition-colors">
-            <div className="flex items-center gap-2">
+          <CollapsibleTrigger className="flex items-center justify-between w-full py-2.5 hover:bg-muted/50 rounded-lg px-3 -mx-3 transition-colors min-w-0">
+            <div className="flex items-center gap-2 min-w-0 flex-1">
               <Tag className="h-4 w-4 text-muted-foreground shrink-0" />
-              <span className="font-medium text-sm">Details</span>
+              <span className="font-medium text-sm truncate">Details</span>
             </div>
             {detailsOpen ? (
               <ChevronDown className="h-4 w-4 shrink-0" />
@@ -542,7 +547,7 @@ export function ContactInfoSidebar({
               <ChevronRight className="h-4 w-4 shrink-0" />
             )}
           </CollapsibleTrigger>
-          <CollapsibleContent className="space-y-3 pt-3">
+          <CollapsibleContent className="space-y-2 pt-2">
             <div>
               <p className="text-sm font-medium text-muted-foreground mb-1">Created</p>
               <p className="text-sm">{new Date(contact.created_at).toLocaleDateString()}</p>
@@ -569,12 +574,12 @@ export function ContactInfoSidebar({
         {/* Background */}
         {contact.description && (
           <>
-            <Separator className="my-5" />
+            <Separator className="my-4" />
             <Collapsible open={backgroundOpen} onOpenChange={setBackgroundOpen}>
-              <CollapsibleTrigger className="flex items-center justify-between w-full py-2.5 hover:bg-muted/50 rounded-lg px-3 -mx-3 transition-colors">
-                <div className="flex items-center gap-2">
+              <CollapsibleTrigger className="flex items-center justify-between w-full py-2.5 hover:bg-muted/50 rounded-lg px-3 -mx-3 transition-colors min-w-0">
+                <div className="flex items-center gap-2 min-w-0 flex-1">
                   <Calendar className="h-4 w-4 text-muted-foreground shrink-0" />
-                  <span className="font-medium text-sm">Background</span>
+                  <span className="font-medium text-sm truncate">Background</span>
                 </div>
                 {backgroundOpen ? (
                   <ChevronDown className="h-4 w-4 shrink-0" />
@@ -582,7 +587,7 @@ export function ContactInfoSidebar({
                   <ChevronRight className="h-4 w-4 shrink-0" />
                 )}
               </CollapsibleTrigger>
-              <CollapsibleContent className="pt-3">
+              <CollapsibleContent className="pt-2">
                 <p className="text-sm text-muted-foreground whitespace-pre-wrap break-words">
                   {contact.description}
                 </p>
@@ -594,12 +599,12 @@ export function ContactInfoSidebar({
         {/* Social Profile */}
         {hasSocial && (
           <>
-            <Separator className="my-5" />
+            <Separator className="my-4" />
             <Collapsible open={socialOpen} onOpenChange={setSocialOpen}>
-              <CollapsibleTrigger className="flex items-center justify-between w-full py-2.5 hover:bg-muted/50 rounded-lg px-3 -mx-3 transition-colors">
-                <div className="flex items-center gap-2">
+              <CollapsibleTrigger className="flex items-center justify-between w-full py-2.5 hover:bg-muted/50 rounded-lg px-3 -mx-3 transition-colors min-w-0">
+                <div className="flex items-center gap-2 min-w-0 flex-1">
                   <Globe className="h-4 w-4 text-muted-foreground shrink-0" />
-                  <span className="font-medium text-sm">Social Profile</span>
+                  <span className="font-medium text-sm truncate">Social Profile</span>
                 </div>
                 {socialOpen ? (
                   <ChevronDown className="h-4 w-4 shrink-0" />
@@ -607,16 +612,16 @@ export function ContactInfoSidebar({
                   <ChevronRight className="h-4 w-4 shrink-0" />
                 )}
               </CollapsibleTrigger>
-              <CollapsibleContent className="space-y-2 pt-3">
+              <CollapsibleContent className="space-y-2 pt-2">
                 {social.linkedin && (
                   <a
                     href={social.linkedin}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-sm text-emerald-600 hover:underline"
+                    className="flex items-center gap-2 text-sm text-emerald-600 hover:underline min-w-0"
                   >
                     <AtSign className="h-4 w-4 shrink-0" />
-                    LinkedIn
+                    <span className="truncate">LinkedIn</span>
                   </a>
                 )}
                 {social.twitter && (
@@ -624,10 +629,10 @@ export function ContactInfoSidebar({
                     href={social.twitter}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-sm text-emerald-600 hover:underline"
+                    className="flex items-center gap-2 text-sm text-emerald-600 hover:underline min-w-0"
                   >
                     <AtSign className="h-4 w-4 shrink-0" />
-                    Twitter
+                    <span className="truncate">Twitter</span>
                   </a>
                 )}
                 <Button variant="ghost" size="sm" className="w-full justify-start text-emerald-600 mt-2">
@@ -638,12 +643,13 @@ export function ContactInfoSidebar({
           </>
         )}
 
-        <Separator className="my-5" />
+        <Separator className="my-4" />
 
         {/* Delete Contact */}
         <DeleteContactButton contact={contact} />
       </div>
-    </ScrollArea>
+        </ScrollArea>
+      </div>
 
     {/* Edit Dialog */}
     <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>

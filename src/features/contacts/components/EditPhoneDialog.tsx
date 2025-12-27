@@ -106,7 +106,7 @@ export function EditPhoneDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {trigger || (
-          <Button variant="ghost" size="icon" className="h-6 w-6 min-h-0 min-w-0 text-muted-foreground hover:text-foreground">
+          <Button variant="ghost" size="icon" className="h-6 w-6 !min-h-0 !min-w-0 p-0 text-muted-foreground hover:text-foreground">
             <Pencil className="h-3.5 w-3.5" />
           </Button>
         )}

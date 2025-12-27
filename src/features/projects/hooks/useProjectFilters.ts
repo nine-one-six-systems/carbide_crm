@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useSearchParams } from 'react-router-dom';
 import type { ProjectFilters, ProjectListParams } from '../types/project.types';
@@ -10,9 +10,43 @@ const defaultFilters: ProjectListParams = {
   sortOrder: 'desc',
 };
 
+const STORAGE_KEY = 'carbide_project_filters';
+
+/**
+ * Load filters from localStorage
+ */
+function loadFiltersFromStorage(): Partial<ProjectFilters> {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      return JSON.parse(stored);
+    }
+  } catch (error) {
+    console.warn('Failed to load filters from localStorage:', error);
+  }
+  return {};
+}
+
+/**
+ * Save filters to localStorage
+ */
+function saveFiltersToStorage(filters: Partial<ProjectFilters>): void {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(filters));
+  } catch (error) {
+    console.warn('Failed to save filters to localStorage:', error);
+  }
+}
+
 export function useProjectFilters() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [localFilters, setLocalFilters] = useState<ProjectFilters>({});
+  const [localFilters, setLocalFilters] = useState<ProjectFilters>(() => {
+    // Initialize from localStorage if no URL params are present
+    if (searchParams.toString() === '') {
+      return loadFiltersFromStorage();
+    }
+    return {};
+  });
 
   // Parse filters from URL params
   const filters = useMemo<ProjectListParams>(() => {
@@ -45,7 +79,7 @@ export function useProjectFilters() {
     return { ...params, ...localFilters };
   }, [searchParams, localFilters]);
 
-  // Update filters and sync to URL
+  // Update filters and sync to URL and localStorage
   const setFilters = useCallback(
     (newFilters: Partial<ProjectListParams>) => {
       const merged = { ...filters, ...newFilters };
@@ -86,6 +120,29 @@ export function useProjectFilters() {
 
       setSearchParams(newParams, { replace: true });
 
+      // Save filter state to localStorage (excluding pagination/sorting)
+      const filtersToSave: Partial<ProjectFilters> = {
+        scope: merged.scope,
+        category: merged.category,
+        status: merged.status,
+        health: merged.health,
+        venture: merged.venture,
+        ownerId: merged.ownerId,
+      };
+      // Only save non-default values
+      const nonDefaultFilters: Partial<ProjectFilters> = {};
+      Object.entries(filtersToSave).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          nonDefaultFilters[key as keyof ProjectFilters] = value;
+        }
+      });
+      if (Object.keys(nonDefaultFilters).length > 0) {
+        saveFiltersToStorage(nonDefaultFilters);
+      } else {
+        // Clear storage if all filters are default
+        localStorage.removeItem(STORAGE_KEY);
+      }
+
       // Update local filters for non-URL state
       const localOnlyFilters: Partial<ProjectFilters> = {};
       Object.keys(newFilters).forEach((key) => {
@@ -104,6 +161,7 @@ export function useProjectFilters() {
   const resetFilters = useCallback(() => {
     setSearchParams(new URLSearchParams(), { replace: true });
     setLocalFilters({});
+    localStorage.removeItem(STORAGE_KEY);
   }, [setSearchParams]);
 
   // Check if any filters are active

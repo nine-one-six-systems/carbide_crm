@@ -17,6 +17,9 @@ import { ProjectHeader } from './ProjectHeader';
 import { PhaseList } from './PhaseList';
 import { LinkedEntities } from './LinkedEntities';
 import { ProjectActivityFeed } from './ProjectActivityFeed';
+import { LinkContactDialog } from './LinkContactDialog';
+import { LinkOrganizationDialog } from './LinkOrganizationDialog';
+import { LinkRelationshipDialog } from './LinkRelationshipDialog';
 
 interface ProjectDetailProps {
   projectId: string;
@@ -37,14 +40,65 @@ function ProjectDetailContent({ projectId }: ProjectDetailProps) {
     organizations: [],
     relationships: [],
   });
+  const [linkContactDialogOpen, setLinkContactDialogOpen] = useState(false);
+  const [linkOrganizationDialogOpen, setLinkOrganizationDialogOpen] = useState(false);
+  const [linkRelationshipDialogOpen, setLinkRelationshipDialogOpen] = useState(false);
 
   // Load activities and linked entities
+  const loadLinkedEntities = () => {
+    if (projectId) {
+      projectService.getLinkedEntities(projectId).then(setLinkedEntities);
+    }
+  };
+
   useEffect(() => {
     if (projectId) {
       projectService.getActivities(projectId).then(setActivities);
-      projectService.getLinkedEntities(projectId).then(setLinkedEntities);
+      loadLinkedEntities();
     }
   }, [projectId]);
+
+  const handleLinkContact = () => {
+    setLinkContactDialogOpen(true);
+  };
+
+  const handleLinkOrganization = () => {
+    setLinkOrganizationDialogOpen(true);
+  };
+
+  const handleLinkRelationship = () => {
+    setLinkRelationshipDialogOpen(true);
+  };
+
+  const handleUnlinkContact = async (contactId: string) => {
+    try {
+      await projectService.unlinkContact(projectId, contactId);
+      loadLinkedEntities();
+      projectService.getActivities(projectId).then(setActivities);
+    } catch (error) {
+      console.error('Error unlinking contact:', error);
+    }
+  };
+
+  const handleUnlinkOrganization = async (organizationId: string) => {
+    try {
+      await projectService.unlinkOrganization(projectId, organizationId);
+      loadLinkedEntities();
+      projectService.getActivities(projectId).then(setActivities);
+    } catch (error) {
+      console.error('Error unlinking organization:', error);
+    }
+  };
+
+  const handleUnlinkRelationship = async (relationshipId: string) => {
+    try {
+      await projectService.unlinkRelationship(projectId, relationshipId);
+      loadLinkedEntities();
+      projectService.getActivities(projectId).then(setActivities);
+    } catch (error) {
+      console.error('Error unlinking relationship:', error);
+    }
+  };
 
   const handleMilestoneToggle = async (milestoneId: string, completed: boolean) => {
     updateMilestone(milestoneId, { completed }, {
@@ -120,6 +174,49 @@ function ProjectDetailContent({ projectId }: ProjectDetailProps) {
             contacts={linkedEntities.contacts}
             organizations={linkedEntities.organizations}
             relationships={linkedEntities.relationships}
+            onLinkContact={handleLinkContact}
+            onLinkOrganization={handleLinkOrganization}
+            onLinkRelationship={handleLinkRelationship}
+            onUnlinkContact={handleUnlinkContact}
+            onUnlinkOrganization={handleUnlinkOrganization}
+            onUnlinkRelationship={handleUnlinkRelationship}
+          />
+
+          {/* Link Dialogs */}
+          <LinkContactDialog
+            projectId={projectId}
+            linkedContactIds={linkedEntities.contacts.map((c) => c.contactId)}
+            open={linkContactDialogOpen}
+            onOpenChange={setLinkContactDialogOpen}
+            onSuccess={() => {
+              loadLinkedEntities();
+              projectService.getActivities(projectId).then(setActivities);
+              setLinkContactDialogOpen(false);
+            }}
+          />
+
+          <LinkOrganizationDialog
+            projectId={projectId}
+            linkedOrganizationIds={linkedEntities.organizations.map((o) => o.organizationId)}
+            open={linkOrganizationDialogOpen}
+            onOpenChange={setLinkOrganizationDialogOpen}
+            onSuccess={() => {
+              loadLinkedEntities();
+              projectService.getActivities(projectId).then(setActivities);
+              setLinkOrganizationDialogOpen(false);
+            }}
+          />
+
+          <LinkRelationshipDialog
+            projectId={projectId}
+            linkedRelationshipIds={linkedEntities.relationships.map((r) => r.relationshipId)}
+            open={linkRelationshipDialogOpen}
+            onOpenChange={setLinkRelationshipDialogOpen}
+            onSuccess={() => {
+              loadLinkedEntities();
+              projectService.getActivities(projectId).then(setActivities);
+              setLinkRelationshipDialogOpen(false);
+            }}
           />
 
           <Separator />

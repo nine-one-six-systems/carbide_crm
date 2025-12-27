@@ -6,13 +6,12 @@ import { ValidatedSelect } from '@/components/forms/ValidatedSelect';
 import { ValidatedTextarea } from '@/components/forms/ValidatedTextarea';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Form } from '@/components/ui/form';
-import { Label } from '@/components/ui/label';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { useContacts } from '@/features/contacts/hooks/useContacts';
 import { useOrganizations } from '@/features/organizations/hooks/useOrganizations';
+import { VentureSelect } from '@/features/ventures/components/VentureSelect';
 import {
   businessRelationshipFormSchema,
   businessRelationshipTypes,
@@ -40,17 +39,6 @@ const typeLabels: Record<string, string> = {
   meridian_44_participant: 'Meridian 44 Participant',
 };
 
-const ventureLabels: Record<string, string> = {
-  forge: 'Forge',
-  hearth: 'Hearth',
-  anvil: 'Anvil',
-  crucible: 'Crucible',
-  foundry: 'Foundry',
-  carbide: 'Carbide',
-  lucepta: 'Lucepta',
-  meridian_44: 'Meridian 44',
-  trade_stone_group: 'Trade Stone Group',
-};
 
 const stageOptions = [
   { value: 'lead', label: 'Lead' },
@@ -85,16 +73,6 @@ export function RelationshipForm({
   });
 
   const selectedType = form.watch('type');
-  const selectedVentures = form.watch('ventures') || [];
-
-  const handleVentureToggle = (venture: string, checked: boolean) => {
-    const current = form.getValues('ventures') || [];
-    if (checked) {
-      form.setValue('ventures', [...current, venture as typeof ventures[number]]);
-    } else {
-      form.setValue('ventures', current.filter((v) => v !== venture));
-    }
-  };
 
   // Determine which type-specific fields to show
   const isClient = selectedType === 'b2b_client' || selectedType === 'b2c_client';
@@ -163,22 +141,22 @@ export function RelationshipForm({
             <CardTitle>Ventures</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-3 gap-3">
-              {ventures.map((venture) => (
-                <Label
-                  key={venture}
-                  className="flex items-center gap-2 cursor-pointer p-2 rounded border hover:bg-accent"
-                >
-                  <Checkbox
-                    checked={selectedVentures.includes(venture)}
-                    onCheckedChange={(checked) =>
-                      handleVentureToggle(venture, checked as boolean)
-                    }
-                  />
-                  <span className="text-sm">{ventureLabels[venture]}</span>
-                </Label>
-              ))}
-            </div>
+            <FormField
+              control={form.control}
+              name="ventures"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Ventures</FormLabel>
+                  <FormControl>
+                    <VentureSelect
+                      value={field.value || []}
+                      onChange={field.onChange}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           </CardContent>
         </Card>
 

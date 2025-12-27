@@ -6,12 +6,14 @@ import {
   CheckSquare,
   Calendar,
   GitBranch,
+  FolderKanban,
   BarChart3,
   Settings,
   Search,
   Bell,
   User,
   LogOut,
+  Rocket,
 } from 'lucide-react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 
@@ -43,18 +45,37 @@ interface NavItem {
 const navItems: NavItem[] = [
   { title: 'Contacts', href: '/contacts', icon: Users },
   { title: 'Organizations', href: '/organizations', icon: Building2 },
+  { title: 'Ventures', href: '/ventures', icon: Rocket },
   { title: 'Tasks', href: '/tasks', icon: CheckSquare },
   { title: 'Cadences', href: '/cadences', icon: Calendar },
   { title: 'Pipelines', href: '/pipelines', icon: GitBranch },
+  { title: 'Projects', href: '/projects', icon: FolderKanban },
   { title: 'Leadership', href: '/leadership', icon: BarChart3 },
   { title: 'Settings', href: '/settings', icon: Settings },
 ];
 
 export function HeaderNav() {
-  const { user, profile, signOut } = useAuth();
+  const { user, profile, signOut, isManager, isAdmin } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [searchOpen, setSearchOpen] = useState(false);
+
+  // Filter nav items based on user role
+  const filteredNavItems = navItems.filter((item) => {
+    // Leadership dashboard is only visible to managers and admins
+    if (item.href === '/leadership') {
+      return isManager();
+    }
+    // Admin routes are only visible to admins
+    if (item.href.startsWith('/admin')) {
+      return isAdmin();
+    }
+    // Manager routes are only visible to managers and admins
+    if (item.href.startsWith('/manager')) {
+      return isManager();
+    }
+    return true;
+  });
 
   // Show dashboard selector on dashboard-related routes
   const isDashboardRoute =
@@ -97,7 +118,7 @@ export function HeaderNav() {
 
       {/* Navigation Links */}
       <nav className="hidden md:flex items-center gap-1 flex-1 ml-2">
-        {navItems.map((item) => {
+        {filteredNavItems.map((item) => {
           const Icon = item.icon;
           return (
             <NavLink

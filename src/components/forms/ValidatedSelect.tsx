@@ -46,7 +46,10 @@ export function ValidatedSelect({
       name={name}
       render={({ field }) => {
         // Ensure value is always a string or undefined (never empty string for Radix Select)
-        const selectValue = field.value === '' || field.value === null ? undefined : field.value;
+        // Use empty string as fallback to maintain controlled component state
+        const selectValue = field.value === '' || field.value === null || field.value === undefined 
+          ? undefined 
+          : String(field.value);
         
         return (
           <FormItem>

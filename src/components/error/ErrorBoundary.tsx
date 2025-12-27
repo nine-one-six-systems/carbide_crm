@@ -1,5 +1,7 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 
+import { errorLogger } from '@/lib/errorLogger';
+
 import { ErrorFallback } from './ErrorFallback';
 
 interface Props {
@@ -25,7 +27,13 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    // Log error using centralized error logger
+    errorLogger.captureException(error, errorInfo);
+    
+    // Keep existing console.error for backward compatibility
     console.error('ErrorBoundary caught an error:', error, errorInfo);
+    
+    // Call custom onError handler if provided
     this.props.onError?.(error, errorInfo);
   }
 
